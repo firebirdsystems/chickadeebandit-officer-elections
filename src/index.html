@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Officer Elections</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:            var(--hub-bg, #f9fafb);
+      --card:          var(--hub-surface, #ffffff);
+      --border:        var(--hub-border, #e5e7eb);
+      --border-mid:    var(--hub-border, #d1d5db);
+      --text:          var(--hub-text, #111827);
+      --muted:         var(--hub-text-muted, #6b7280);
+      --accent:        var(--hub-primary, #111827);
+      --accent-hover:  var(--hub-primary-hover, #374151);
+      --accent-light:  #f3f4f6;
+      --accent-lighter:#f9fafb;
+      --green: #059669;
+      --green-light: #d1fae5;
+      --red: #dc2626;
+      --red-light: #fee2e2;
+      --amber: #d97706;
+      --amber-light: #fef3c7;
+      --blue: #2563eb;
+      --blue-light: #dbeafe;
+      --radius: var(--hub-radius, 0.5rem);
+      --shadow: 0 1px 3px rgba(0,0,0,.07);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.1);
+    }
+
+    body {
+      font-family: var(--hub-font, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: var(--hub-font-size, 15px);
+      line-height: 1.5;
+    }
+
+    .app { max-width: 620px; margin: 0 auto; padding: 16px; }
+
+    /* ── Typography ─────────────────────────────────────── */
+    .section-title {
+      font-size: 0.7rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px;
+    }
+
+    /* ── Buttons ────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      border: none; transition: opacity .15s, background .15s; text-decoration: none;
+    }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn-primary { background: var(--accent); color: var(--hub-primary-fg, #ffffff); }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border-mid); }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-danger:hover:not(:disabled) { opacity: .88; }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover:not(:disabled) { opacity: .88; }
+    .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
+
+    /* ── Cards ──────────────────────────────────────────── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 10px;
+    }
+    .card-body { padding: 16px; }
+
+    /* ── Header ─────────────────────────────────────────── */
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; gap: 10px;
+    }
+    .page-header h1 { font-size: 1.25rem; font-weight: 700; }
+
+    /* ── Avatars ─────────────────────────────────────────── */
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 800; color: white; flex-shrink: 0;
+    }
+    .avatar-sm {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 800; color: white;
+    }
+
+    /* ── Badges ─────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    }
+    .badge-nominations  { background: var(--blue-light);  color: var(--blue); }
+    .badge-voting       { background: var(--green-light); color: var(--green); }
+    .badge-closed       { background: var(--amber-light); color: var(--amber); }
+    .badge-certified    { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .badge-majority     { background: var(--accent-light); color: var(--muted); }
+    .badge-rc           { background: var(--accent-light); color: var(--muted); }
+
+    /* ── Tabs ───────────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 4px; background: var(--border);
+      border-radius: 10px; padding: 3px; margin-bottom: 16px;
+    }
+    .tab {
+      flex: 1; padding: 7px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 0.85rem; font-weight: 600;
+      color: var(--muted); background: transparent; transition: all .15s;
+    }
+    .tab.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+
+    /* ── Election list cards ─────────────────────────────── */
+    .election-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 10px;
+      cursor: pointer; transition: box-shadow .15s, border-color .15s;
+    }
+    .election-card:hover { box-shadow: var(--shadow-md); border-color: var(--border-mid); }
+    .election-card-inner { padding: 14px 16px; }
+    .election-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .election-office { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; }
+    .election-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    /* ── Back button ─────────────────────────────────────── */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.82rem; color: var(--accent); cursor: pointer;
+      background: none; border: none; padding: 0; margin-bottom: 12px; font-weight: 600;
+    }
+    .back-btn:hover { opacity: .75; }
+
+    /* ── Detail header ───────────────────────────────────── */
+    .detail-header {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
+    }
+    .detail-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+    .detail-office { font-size: 0.85rem; color: var(--muted); margin-bottom: 10px; }
+    .detail-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 0.8rem; color: var(--muted); }
+
+    /* ── Phase banner ────────────────────────────────────── */
+    .phase-banner {
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 0.82rem; font-weight: 500; margin-bottom: 12px;
+    }
+    .phase-banner.nominations { background: var(--blue-light); color: var(--blue); }
+    .phase-banner.voting      { background: var(--green-light); color: var(--green); }
+    .phase-banner.closed      { background: var(--amber-light); color: var(--amber); }
+    .phase-banner.certified   { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .phase-banner.voted       { background: var(--green-light); color: var(--green); }
+
+    /* ── Candidate cards ─────────────────────────────────── */
+    .candidate-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px;
+      box-shadow: var(--shadow);
+    }
+    .candidate-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+    }
+    .candidate-name { font-weight: 600; font-size: 0.95rem; }
+    .candidate-nominated { font-size: 0.75rem; color: var(--muted); }
+    .candidate-statement { font-size: 0.85rem; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+    /* ── Results bar ─────────────────────────────────────── */
+    .result-bar-wrap {
+      height: 8px; background: var(--border); border-radius: 4px;
+      overflow: hidden; margin: 6px 0 4px;
+    }
+    .result-bar-fill {
+      height: 100%; border-radius: 4px; background: var(--accent); transition: width .4s ease;
+    }
+    .result-bar-fill.winner { background: var(--green); }
+
+    /* ── IRV rounds ──────────────────────────────────────── */
+    .irv-rounds { margin-top: 12px; }
+    .irv-round {
+      border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; overflow: hidden;
+    }
+    .irv-round-header {
+      padding: 8px 12px; font-size: 0.78rem; font-weight: 700;
+      color: var(--muted); background: var(--accent-lighter);
+      display: flex; justify-content: space-between;
+    }
+
+    /* ── Vote ballot ─────────────────────────────────────── */
+    .ballot-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background .1s;
+    }
+    .ballot-option:last-child { border-bottom: none; }
+    .ballot-option:hover { background: var(--accent-lighter); }
+    .ballot-option input[type="radio"] { width: 18px; height: 18px; cursor: pointer; }
+    .ballot-option-name { font-weight: 500; font-size: 0.95rem; }
+
+    .rank-option {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+    }
+    .rank-option:last-child { border-bottom: none; }
+    .rank-badge {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+      color: white; font-weight: 700; font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .rank-badge.unranked { background: var(--border); color: var(--muted); }
+    .rank-controls { display: flex; gap: 4px; margin-left: auto; }
+    .rank-btn {
+      width: 28px; height: 28px; border-radius: 6px;
+      border: 1.5px solid var(--border-mid); background: var(--card);
+      cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+    }
+    .rank-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .rank-btn:disabled { opacity: .35; cursor: default; }
+
+    /* ── Admin actions strip ─────────────────────────────── */
+    .admin-strip {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      padding: 12px 14px; border-top: 1px solid var(--border);
+    }
+
+    /* ── Participation ───────────────────────────────────── */
+    .participation {
+      font-size: 0.78rem; color: var(--muted); margin-top: 4px;
+    }
+
+    /* ── Modal ──────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: flex-end; justify-content: center; z-index: 100;
+    }
+    @media (min-width: 520px) { .modal-backdrop { align-items: center; padding: 20px; } }
+    .modal {
+      background: var(--card); border-radius: var(--radius) var(--radius) 0 0;
+      width: 100%; max-width: 500px; max-height: 92vh; overflow-y: auto; padding: 24px;
+    }
+    @media (min-width: 520px) { .modal { border-radius: var(--radius); } }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+
+    /* ── Form ────────────────────────────────────────────── */
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--muted); margin-bottom: 5px;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="datetime-local"],
+    .form-group textarea,
+    .form-group select {
+      width: 100%; border: 1.5px solid var(--border-mid); border-radius: 8px;
+      padding: 9px 12px; font-size: 0.92rem; outline: none;
+      transition: border-color .15s; font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+
+    .radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .radio-option {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border: 1.5px solid var(--border-mid);
+      border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 500;
+      transition: all .15s;
+    }
+    .radio-option.selected { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+    .radio-option input { display: none; }
+
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-row:last-child { border-bottom: none; }
+    .toggle-label .name { font-size: 0.88rem; font-weight: 500; }
+    .toggle-label .desc { font-size: 0.75rem; color: var(--muted); }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; border-radius: 11px;
+      background: #cbd5e1; cursor: pointer; transition: background .2s;
+    }
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+      transition: transform .2s; pointer-events: none;
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-actions .btn { flex: 1; justify-content: center; }
+
+    /* ── Misc ────────────────────────────────────────────── */
+    .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 0.9rem; }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .loading { text-align: center; padding: 48px; color: var(--muted); }
+    .error-msg {
+      background: var(--red-light); color: var(--red);
+      border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 12px;
+    }
+    .deadline-note { font-size: 0.75rem; color: var(--amber); font-weight: 500; }
+  </style>
+<base href="/run/officer-elections/">
+</head>
+<body>
+<div class="app">
+  <div id="root"><div class="loading">Loading…</div></div>
+</div>
+
+<script type="module">
+import { memberColor, initial, esc, isAdult } from "/hub-sdk.js";
+import {
+  electionPhase, deadlineLabel,
+  tallyMajority, tallyRankedChoice, winnerId,
+} from "./logic.js";
+
+// ─── Runtime globals ──────────────────────────────────────────────────────────
+const CONTEXT  = window.__CONTEXT_URL ?? "";
+const DB       = window.__DB_URL      ?? "";
+const APP_ID   = window.__APP_ID      ?? "officer-elections";
+const ME       = window.__CURRENT_MEMBER ?? null;
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let members           = [];
+let elections         = [];
+let currentElectionId = null;
+let listTab           = "active"; // "active" | "completed"
+
+// Loaded per-election when detail view opens
+let detailCandidates  = [];
+let detailBallotItems = [];
+let detailHasVoted    = false;
+let detailBallotCount = 0;
+
+// ─── Lookup maps (O(1) access instead of O(n) .find scans) ───────────────────
+let membersMap          = new Map(); // id → member
+let electionsMap        = new Map(); // id → election
+let detailCandidatesMap = new Map(); // id → candidate
+
+function rebuildMembersMap()    { membersMap    = new Map(members.map(m => [m.id, m])); }
+function rebuildElectionsMap()  { electionsMap  = new Map(elections.map(e => [e.id, e])); }
+function rebuildCandidatesMap() { detailCandidatesMap = new Map(detailCandidates.map(c => [c.id, c])); }
+
+// ─── DB helper ────────────────────────────────────────────────────────────────
+async function db(sql, params = []) {
+  if (!DB) return { rows: [] };
+  const res = await fetch(DB, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sql, params }),
+  });
+  return res.json();
+}
+
+// ─── Member helpers ───────────────────────────────────────────────────────────
+function memberById(id) { return membersMap.get(id); }
+function canAdmin() { return isAdult(ME); }
+
+// ─── Data loading ─────────────────────────────────────────────────────────────
+async function loadMembers() {
+  if (!CONTEXT) {
+    members = [
+      { id: "demo-1", name: "Alex Rivera",    role: "adult" },
+      { id: "demo-2", name: "Jordan Kim",     role: "adult" },
+      { id: "demo-3", name: "Casey Park",     role: "adult" },
+      { id: "demo-4", name: "Morgan Lee",     role: "adult" },
+      { id: "demo-5", name: "Taylor Nguyen",  role: "adult" },
+    ];
+    return;
+  }
+  try {
+    const res = await fetch(`${CONTEXT}?keys=family.members`);
+    members = ((await res.json())["family.members"]) ?? [];
+  } catch { members = []; }
+}
+
+async function loadElections() {
+  if (!DB) {
+    // Demo data covering all phases
+    const now = new Date();
+    const future = (h) => new Date(now.getTime() + h * 3_600_000).toISOString();
+    const past   = (h) => new Date(now.getTime() - h * 3_600_000).toISOString();
+    elections = [
+      {
+        id: "demo-el-1", title: "President — Fall 2026", office: "President",
+        voting_method: "majority", has_nominations: 1,
+        nominations_deadline: future(48), voting_deadline: future(120),
+        status: "nominations", term_label: "Fall 2026",
+        created_by: "demo-1", created_at: past(2),
+        certified_by: null, certified_at: null,
+      },
+      {
+        id: "demo-el-2", title: "Treasurer — Fall 2026", office: "Treasurer",
+        voting_method: "ranked_choice", has_nominations: 0,
+        nominations_deadline: null, voting_deadline: future(24),
+        status: "voting", term_label: "Fall 2026",
+        created_by: "demo-1", created_at: past(48),
+        certified_by: null, certified_at: null,
+      },
+      {
+        id: "demo-el-3", title: "Secretary — Spring 2026", office: "Secretary",
+        voting_method: "majority", has_nominations: 1,
+        nominations_deadline: past(72), voting_deadline: past(24),
+        status: "closed", term_label: "Spring 2026",
+        created_by: "demo-1", created_at: past(120),
+        certified_by: null, certified_at: null,
+      },
+      {
+        id: "demo-el-4", title: "Vice President — Spring 2026", office: "Vice President",
+        voting_method: "ranked_choice", has_nominations: 1,
+        nominations_deadline: past(120), voting_deadline: past(72),
+        status: "certified", term_label: "Spring 2026",
+        created_by: "demo-1", created_at: past(200),
+        certified_by: "demo-2", certified_at: past(48),
+      },
+    ];
+    return;
+  }
+  try {
+    const res = await db(
+      `SELECT * FROM oe_elections WHERE household_id = current_setting('app.household_id', true)::uuid ORDER BY created_at DESC`
+    );
+    elections = res.rows ?? [];
+  } catch { elections = []; }
+}
+
+async function loadDetailData(electionId) {
+  if (!DB) {
+    // Demo candidates and ballots
+    const demoCandidates = {
+      "demo-el-1": [
+        { id: "dc-1", election_id: "demo-el-1", member_id: "demo-2", statement: "I've been chapter treasurer for two years and want to bring that experience to the presidency.", nominated_by: "demo-3", created_at: new Date().toISOString() },
+        { id: "dc-2", election_id: "demo-el-1", member_id: "demo-4", statement: "Committed to transparency and chapter growth.", nominated_by: "demo-4", created_at: new Date().toISOString() },
+      ],
+      "demo-el-2": [
+        { id: "dc-3", election_id: "demo-el-2", member_id: "demo-2", statement: "", nominated_by: "demo-1", created_at: new Date().toISOString() },
+        { id: "dc-4", election_id: "demo-el-2", member_id: "demo-3", statement: "Strong financial background.", nominated_by: "demo-3", created_at: new Date().toISOString() },
+        { id: "dc-5", election_id: "demo-el-2", member_id: "demo-5", statement: "Three years of org finance experience.", nominated_by: "demo-1", created_at: new Date().toISOString() },
+      ],
+      "demo-el-3": [
+        { id: "dc-6", election_id: "demo-el-3", member_id: "demo-1", statement: "I'll keep detailed meeting records.", nominated_by: "demo-1", created_at: new Date().toISOString() },
+        { id: "dc-7", election_id: "demo-el-3", member_id: "demo-5", statement: "Organized and detail-oriented.", nominated_by: "demo-2", created_at: new Date().toISOString() },
+      ],
+      "demo-el-4": [
+        { id: "dc-8", election_id: "demo-el-4", member_id: "demo-3", statement: "Ready to serve.", nominated_by: "demo-3", created_at: new Date().toISOString() },
+        { id: "dc-9", election_id: "demo-el-4", member_id: "demo-4", statement: "VP experience from last year.", nominated_by: "demo-1", created_at: new Date().toISOString() },
+      ],
+    };
+    const demoBallotItems = {
+      "demo-el-3": [
+        { ballot_id: "db-1", candidate_id: "dc-6", rank: 1 },
+        { ballot_id: "db-1", candidate_id: "dc-6", rank: 1 },
+        { ballot_id: "db-2", candidate_id: "dc-7", rank: 1 },
+      ],
+      "demo-el-4": [
+        { ballot_id: "db-3", candidate_id: "dc-8", rank: 1 },
+        { ballot_id: "db-3", candidate_id: "dc-9", rank: 2 },
+        { ballot_id: "db-4", candidate_id: "dc-9", rank: 1 },
+        { ballot_id: "db-4", candidate_id: "dc-8", rank: 2 },
+        { ballot_id: "db-5", candidate_id: "dc-8", rank: 1 },
+        { ballot_id: "db-5", candidate_id: "dc-9", rank: 2 },
+      ],
+    };
+    detailCandidates  = demoCandidates[electionId] ?? [];
+    detailBallotItems = demoBallotItems[electionId] ?? [];
+    detailHasVoted    = false;
+    detailBallotCount = new Set(detailBallotItems.map(i => i.ballot_id)).size;
+    rebuildCandidatesMap();
+    return;
+  }
+
+  try {
+    const [candRes, ballotCountRes, hasVotedRes] = await Promise.all([
+      db(`SELECT * FROM oe_candidates WHERE election_id = ? AND household_id = current_setting('app.household_id', true)::uuid ORDER BY created_at`, [electionId]),
+      db(`SELECT COUNT(*) AS cnt FROM oe_ballots WHERE election_id = ? AND household_id = current_setting('app.household_id', true)::uuid`, [electionId]),
+      ME ? db(`SELECT id FROM oe_ballots WHERE election_id = ? AND voter_id = ? AND household_id = current_setting('app.household_id', true)::uuid LIMIT 1`, [electionId, ME.id]) : Promise.resolve({ rows: [] }),
+    ]);
+    detailCandidates  = candRes.rows ?? [];
+    detailBallotCount = Number(ballotCountRes.rows?.[0]?.cnt ?? 0);
+    detailHasVoted    = (hasVotedRes.rows?.length ?? 0) > 0;
+
+    // Only load ballot items (for results) when closed or certified
+    const election = electionsMap.get(electionId);
+    const phase = election ? electionPhase(election) : null;
+    if (phase === "closed" || phase === "certified") {
+      const itemsRes = await db(
+        `SELECT bi.ballot_id, bi.candidate_id, bi.rank FROM oe_ballot_items bi JOIN oe_ballots b ON b.id = bi.ballot_id WHERE b.election_id = ? AND b.household_id = current_setting('app.household_id', true)::uuid`,
+        [electionId]
+      );
+      detailBallotItems = itemsRes.rows ?? [];
+    } else {
+      detailBallotItems = [];
+    }
+    rebuildCandidatesMap();
+  } catch {
+    detailCandidates  = [];
+    detailBallotItems = [];
+    detailHasVoted    = false;
+    detailBallotCount = 0;
+  }
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+async function notify(title, body) {
+  await fetch("/api/notifications/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
+  }).catch(() => {});
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+async function createElection(data) {
+  const id = crypto.randomUUID();
+  const initialStatus = data.hasNominations ? "nominations" : "voting";
+  await db(
+    `INSERT INTO oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, data.title, data.office, data.votingMethod, data.hasNominations ? 1 : 0,
+     data.nominationsDeadline || null, data.votingDeadline,
+     initialStatus, data.termLabel, ME?.id ?? "system", new Date().toISOString()]
+  );
+  await Promise.all([
+    loadElections().then(rebuildElectionsMap),
+    notify(`New election: ${data.office}`, `A new officer election has been created for ${data.office}. ${data.hasNominations ? "Nominations are now open." : "Voting is now open."}`),
+    fetch("/api/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "election_created",
+        description: `${ME?.name ?? "Someone"} created a new election for ${data.office}`,
+        metadata: { deepLink: { appId: APP_ID, params: { electionId: id } } },
+      }),
+    }).catch(() => {}),
+  ]);
+  closeModal();
+  currentElectionId = id;
+  await openElection(id);
+}
+
+async function nominateCandidate(electionId, memberId, statement) {
+  const id = crypto.randomUUID();
+  await db(
+    `INSERT INTO oe_candidates (id, election_id, member_id, statement, nominated_by, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [id, electionId, memberId, statement, ME?.id ?? "system", new Date().toISOString()]
+  );
+  const nominee = memberById(memberId);
+  await Promise.all([
+    loadDetailData(electionId),
+    notify(`Nomination: ${nominee?.name ?? "Someone"}`, `${nominee?.name ?? "Someone"} has been nominated for an officer position.`),
+  ]);
+  closeModal();
+  render();
+}
+
+async function advanceToVoting(electionId) {
+  await db(`UPDATE oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
+  const election = electionsMap.get(electionId);
+  if (election) election.status = "voting";
+  await Promise.all([
+    notify("Voting is now open", `Voting has opened for ${election?.office ?? "an officer position"}. Cast your ballot!`),
+    fetch("/api/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "election_voting_opened",
+        description: `Voting opened for ${election?.office ?? "officer election"}`,
+        metadata: { deepLink: { appId: APP_ID, params: { electionId } } },
+      }),
+    }).catch(() => {}),
+  ]);
+  render();
+}
+
+async function closeVoting(electionId) {
+  await db(`UPDATE oe_elections SET status = 'closed' WHERE id = ?`, [electionId]);
+  const election = electionsMap.get(electionId);
+  if (election) election.status = "closed";
+  await loadDetailData(electionId);
+  render();
+}
+
+async function castMajorityBallot(electionId, candidateId) {
+  const ballotId = crypto.randomUUID();
+  const itemId   = crypto.randomUUID();
+  await db(
+    `INSERT INTO oe_ballots (id, election_id, voter_id, created_at) VALUES (?, ?, ?, ?)`,
+    [ballotId, electionId, ME.id, new Date().toISOString()]
+  );
+  await db(
+    `INSERT INTO oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, 1)`,
+    [itemId, ballotId, candidateId]
+  );
+  detailHasVoted    = true;
+  detailBallotCount = detailBallotCount + 1;
+  closeModal();
+  patchAfterVote();
+}
+
+async function castRankedBallot(electionId, rankedCandidateIds) {
+  const ballotId = crypto.randomUUID();
+  await db(
+    `INSERT INTO oe_ballots (id, election_id, voter_id, created_at) VALUES (?, ?, ?, ?)`,
+    [ballotId, electionId, ME.id, new Date().toISOString()]
+  );
+  await Promise.all(rankedCandidateIds.map((cid, i) =>
+    db(`INSERT INTO oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)`,
+       [crypto.randomUUID(), ballotId, cid, i + 1])
+  ));
+  detailHasVoted    = true;
+  detailBallotCount = detailBallotCount + 1;
+  closeModal();
+  patchAfterVote();
+}
+
+async function certifyResults(electionId) {
+  const now = new Date().toISOString();
+  await db(
+    `UPDATE oe_elections SET status = 'certified', certified_by = ?, certified_at = ? WHERE id = ?`,
+    [ME.id, now, electionId]
+  );
+  const election = electionsMap.get(electionId);
+  if (election) { election.status = "certified"; election.certified_by = ME.id; election.certified_at = now; }
+  const win = winnerId(election, detailCandidates, detailBallotItems);
+  const winMember = win ? memberById(detailCandidatesMap.get(win)?.member_id) : null;
+  await Promise.all([
+    notify("Election certified", `Results for ${election?.office ?? "officer election"} have been certified.${winMember ? ` Winner: ${winMember.name}.` : ""}`),
+    fetch("/api/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "election_certified",
+        description: `${ME.name} certified election results for ${election?.office ?? "officer"}${winMember ? ` — ${winMember.name} elected` : ""}`,
+        metadata: { deepLink: { appId: APP_ID, params: { electionId } } },
+      }),
+    }).catch(() => {}),
+  ]);
+  render();
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+let modalEl = null;
+function openModal(html) {
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-backdrop";
+  modalEl.innerHTML = `<div class="modal">${html}</div>`;
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+function closeModal() { modalEl?.remove(); modalEl = null; }
+window.closeModal = closeModal;
+
+function openCreateElectionModal() {
+  let hasNoms = true;
+  openModal(`
+    <h3>New Election</h3>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="f-title" placeholder="President — Fall 2026" />
+    </div>
+    <div class="form-group">
+      <label>Office</label>
+      <input type="text" id="f-office" placeholder="President" />
+    </div>
+    <div class="form-group">
+      <label>Voting method</label>
+      <div class="radio-group" id="voting-method-group">
+        <div class="radio-option selected" data-value="majority" onclick="selectVotingMethod(this)">
+          <input type="radio" name="vm" value="majority" checked />
+          Majority
+        </div>
+        <div class="radio-option" data-value="ranked_choice" onclick="selectVotingMethod(this)">
+          <input type="radio" name="vm" value="ranked_choice" />
+          Ranked-Choice (IRV)
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row" style="padding-top:0">
+        <div class="toggle-label">
+          <div class="name">Include nominations phase</div>
+          <div class="desc">Members nominate candidates before voting opens</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="f-has-noms" checked onchange="toggleNomDeadline(this)" />
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>
+    <div class="form-group" id="nom-deadline-group">
+      <label>Nominations close</label>
+      <input type="datetime-local" id="f-nom-deadline" />
+    </div>
+    <div class="form-group">
+      <label>Voting closes</label>
+      <input type="datetime-local" id="f-vote-deadline" />
+    </div>
+    <div class="form-group">
+      <label>Term label <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <input type="text" id="f-term" placeholder="Fall 2026" />
+    </div>
+    <div id="create-error" class="error-msg" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitCreateElection()">Create Election</button>
+    </div>
+  `);
+}
+
+window.selectVotingMethod = function(el) {
+  document.querySelectorAll(".radio-option").forEach(o => o.classList.remove("selected"));
+  el.classList.add("selected");
+};
+
+window.toggleNomDeadline = function(checkbox) {
+  document.getElementById("nom-deadline-group").style.display = checkbox.checked ? "" : "none";
+};
+
+window.submitCreateElection = async function() {
+  const title          = document.getElementById("f-title").value.trim();
+  const office         = document.getElementById("f-office").value.trim();
+  const votingMethod   = document.querySelector(".radio-option.selected")?.dataset.value ?? "majority";
+  const hasNominations = document.getElementById("f-has-noms").checked;
+  const nomDeadline    = document.getElementById("f-nom-deadline").value;
+  const voteDeadline   = document.getElementById("f-vote-deadline").value;
+  const termLabel      = document.getElementById("f-term").value.trim();
+  const errEl          = document.getElementById("create-error");
+
+  if (!title)  { showErr(errEl, "Please enter a title."); return; }
+  if (!office) { showErr(errEl, "Please enter an office."); return; }
+  if (!voteDeadline) { showErr(errEl, "Please set a voting deadline."); return; }
+  if (hasNominations && !nomDeadline) { showErr(errEl, "Please set a nominations deadline."); return; }
+  if (hasNominations && new Date(nomDeadline) >= new Date(voteDeadline)) {
+    showErr(errEl, "Voting deadline must be after nominations deadline."); return;
+  }
+  errEl.style.display = "none";
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
+
+  try {
+    await createElection({ title, office, votingMethod, hasNominations, nominationsDeadline: nomDeadline, votingDeadline: voteDeadline, termLabel });
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Create Election"; }
+  }
+};
+
+function openNominateModal(electionId) {
+  const nominated = new Set(detailCandidates.map(c => c.member_id));
+  const eligible  = members.filter(m => !nominated.has(m.id));
+  if (eligible.length === 0) {
+    openModal(`
+      <h3>Nominate a Candidate</h3>
+      <p style="color:var(--muted);font-size:0.9rem">All members have already been nominated.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    `);
+    return;
+  }
+  openModal(`
+    <h3>Nominate a Candidate</h3>
+    <div class="form-group">
+      <label>Member</label>
+      <select id="f-nominee">
+        <option value="">Select member…</option>
+        ${eligible.map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Candidate statement <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <textarea id="f-statement" placeholder="Why are you running for this office?"></textarea>
+    </div>
+    <div id="nom-error" class="error-msg" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitNominate('${esc(electionId)}')">Nominate</button>
+    </div>
+  `);
+}
+
+window.submitNominate = async function(electionId) {
+  const memberId  = document.getElementById("f-nominee").value;
+  const statement = document.getElementById("f-statement").value.trim();
+  const errEl     = document.getElementById("nom-error");
+  if (!memberId) { showErr(errEl, "Please select a member."); return; }
+  errEl.style.display = "none";
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Nominating…"; }
+  try {
+    await nominateCandidate(electionId, memberId, statement);
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Nominate"; }
+  }
+};
+
+function openMajorityBallotModal(electionId) {
+  openModal(`
+    <h3>Cast Your Ballot</h3>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Select one candidate. Your vote is secret.</p>
+    <div class="card" style="overflow:hidden;margin-bottom:0">
+      ${detailCandidates.map(c => {
+        const m = memberById(c.member_id);
+        return `
+          <label class="ballot-option">
+            <input type="radio" name="ballot-choice" value="${esc(c.id)}" />
+            <span class="avatar-sm" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
+            <span class="ballot-option-name">${esc(m?.name ?? "Unknown")}</span>
+          </label>
+        `;
+      }).join("")}
+    </div>
+    <div id="ballot-error" class="error-msg" style="display:none;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitMajorityBallot('${esc(electionId)}')">Submit Ballot</button>
+    </div>
+  `);
+}
+
+window.submitMajorityBallot = async function(electionId) {
+  const selected = modalEl?.querySelector("input[name='ballot-choice']:checked")?.value;
+  const errEl    = document.getElementById("ballot-error");
+  if (!selected) { showErr(errEl, "Please select a candidate."); return; }
+  errEl.style.display = "none";
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
+  try {
+    await castMajorityBallot(electionId, selected);
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
+  }
+};
+
+// Ranked-choice ballot state: array of candidate ids in ranked order
+let rcRanking = [];
+
+function openRankedBallotModal(electionId) {
+  rcRanking = detailCandidates.map(c => c.id); // initial order = nomination order
+  openModal(`
+    <h3>Cast Your Ballot</h3>
+    <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">Rank all candidates: 1 = first choice. Your vote is secret.</p>
+    <div class="card" style="overflow:hidden;margin-bottom:0" id="rc-ballot-list">
+      ${renderRCOptions()}
+    </div>
+    <div id="ballot-error" class="error-msg" style="display:none;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRankedBallot('${esc(electionId)}')">Submit Ballot</button>
+    </div>
+  `);
+}
+
+function renderRCOptions() {
+  return rcRanking.map((cid, idx) => {
+    const c = detailCandidatesMap.get(cid);
+    const m = memberById(c?.member_id);
+    return `
+      <div class="rank-option" data-cid="${esc(cid)}">
+        <span class="rank-badge">${idx + 1}</span>
+        <span class="avatar-sm" style="background:${memberColor(c?.member_id ?? "")}">
+          ${initial(m?.name ?? "?")}
+        </span>
+        <span style="font-weight:500;font-size:0.95rem">${esc(m?.name ?? "Unknown")}</span>
+        <div class="rank-controls">
+          <button class="rank-btn" onclick="moveRank('${esc(cid)}', -1)" ${idx === 0 ? "disabled" : ""}>▲</button>
+          <button class="rank-btn" onclick="moveRank('${esc(cid)}', 1)" ${idx === rcRanking.length - 1 ? "disabled" : ""}>▼</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+window.moveRank = function(cid, dir) {
+  const idx = rcRanking.indexOf(cid);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= rcRanking.length) return;
+  [rcRanking[idx], rcRanking[newIdx]] = [rcRanking[newIdx], rcRanking[idx]];
+  const list = document.getElementById("rc-ballot-list");
+  if (list) list.innerHTML = renderRCOptions();
+};
+
+window.submitRankedBallot = async function(electionId) {
+  const errEl = document.getElementById("ballot-error");
+  errEl.style.display = "none";
+
+  const btn = modalEl?.querySelector(".modal-actions .btn-primary");
+  if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
+  try {
+    await castRankedBallot(electionId, rcRanking);
+  } catch {
+    if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
+  }
+};
+
+// ─── Rendering ────────────────────────────────────────────────────────────────
+function phaseBadge(phase) {
+  const map = {
+    nominations: `<span class="badge badge-nominations">Nominations</span>`,
+    voting:      `<span class="badge badge-voting">Voting Open</span>`,
+    closed:      `<span class="badge badge-closed">Closed</span>`,
+    certified:   `<span class="badge badge-certified">✓ Certified</span>`,
+  };
+  return map[phase] ?? "";
+}
+
+function renderList() {
+  // Compute phase once per election — avoid 3× calls per card (filter×2 + render)
+  const withPhase  = elections.map(e => ({ election: e, phase: electionPhase(e) }));
+  const active     = withPhase.filter(x => x.phase !== "certified");
+  const completed  = withPhase.filter(x => x.phase === "certified");
+  const showing    = listTab === "active" ? active : completed;
+
+  const header = `
+    <div class="page-header">
+      <div>
+        <h1>🗳️ Officer Elections</h1>
+      </div>
+      ${canAdmin() ? `<button class="btn btn-primary btn-sm" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
+    </div>
+    <div class="tabs">
+      <button class="tab ${listTab === "active" ? "active" : ""}" onclick="setListTab('active')">
+        Active${active.length > 0 ? ` (${active.length})` : ""}
+      </button>
+      <button class="tab ${listTab === "completed" ? "active" : ""}" onclick="setListTab('completed')">
+        Completed${completed.length > 0 ? ` (${completed.length})` : ""}
+      </button>
+    </div>
+  `;
+
+  const list = showing.length === 0
+    ? `<div class="empty">
+        <div class="empty-icon">${listTab === "active" ? "🗳️" : "📋"}</div>
+        <p>${listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
+        ${listTab === "active" && canAdmin() ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
+       </div>`
+    : showing.map(({ election, phase }) => renderElectionCard(election, phase)).join("");
+
+  document.getElementById("root").innerHTML = header + list;
+}
+
+function renderElectionCard(election, phase) {
+  phase = phase ?? electionPhase(election);
+  const deadline = phase === "nominations" ? election.nominations_deadline
+    : phase === "voting" ? election.voting_deadline
+    : null;
+  const dl = deadlineLabel(deadline);
+  const vmLabel = election.voting_method === "ranked_choice" ? "Ranked-Choice" : "Majority";
+  return `
+    <div class="election-card" onclick="openElection('${esc(election.id)}')">
+      <div class="election-card-inner">
+        <div class="election-title">${esc(election.title)}</div>
+        <div class="election-office">${esc(election.office)}${election.term_label ? ` · ${esc(election.term_label)}` : ""}</div>
+        <div class="election-meta">
+          ${phaseBadge(phase)}
+          <span class="badge ${election.voting_method === "ranked_choice" ? "badge-rc" : "badge-majority"}">${vmLabel}</span>
+          ${dl ? `<span class="deadline-note">⏱ ${esc(dl)}</span>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDetail(election) {
+  const phase       = electionPhase(election);
+  const phase2Label = election.voting_method === "ranked_choice" ? "Ranked-Choice" : "Majority";
+  const certifier   = election.certified_by ? memberById(election.certified_by) : null;
+  const creator     = election.created_by   ? memberById(election.created_by)   : null;
+
+  // Phase banner
+  const bannerText = {
+    nominations: `📋 Nominations open${election.nominations_deadline ? ` · ${deadlineLabel(election.nominations_deadline) ?? ""}` : ""}`,
+    voting:      `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""} · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
+    closed:      `🔒 Voting closed · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
+    certified:   `✅ Certified by ${esc(certifier?.name ?? "admin")}${election.certified_at ? ` on ${new Date(election.certified_at).toLocaleDateString()}` : ""}`,
+  };
+  const phaseBannerHtml = `<div class="phase-banner ${phase}" id="phase-banner">${bannerText[phase] ?? ""}</div>`;
+
+  let bodyHtml = "";
+
+  if (phase === "nominations") {
+    bodyHtml = renderNominationsBody(election);
+  } else if (phase === "voting") {
+    bodyHtml = renderVotingBody(election);
+  } else {
+    bodyHtml = renderResultsBody(election, phase);
+  }
+
+  document.getElementById("root").innerHTML = `
+    <button class="back-btn" onclick="backToList()">← All Elections</button>
+
+    <div class="detail-header">
+      <div class="detail-title">${esc(election.title)}</div>
+      <div class="detail-office">${esc(election.office)}${election.term_label ? ` · ${esc(election.term_label)}` : ""}</div>
+      <div class="detail-meta">
+        ${phaseBadge(phase)}
+        <span class="badge ${election.voting_method === "ranked_choice" ? "badge-rc" : "badge-majority"}">${phase2Label}</span>
+        ${creator ? `<span>Created by ${esc(creator.name)}</span>` : ""}
+      </div>
+    </div>
+
+    ${phaseBannerHtml}
+    ${bodyHtml}
+
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="backToList()">← Back to elections</button>
+    </div>
+  `;
+}
+
+function renderNominationsBody(election) {
+  const candidateHtml = detailCandidates.length === 0
+    ? `<div class="empty" style="padding:24px"><div class="empty-icon" style="font-size:2rem">👤</div><p>No candidates nominated yet.</p></div>`
+    : detailCandidates.map(c => renderCandidateCard(c)).join("");
+
+  const adminStrip = canAdmin() ? `
+    <div class="admin-strip">
+      <button class="btn btn-primary btn-sm" onclick="openNominateModal('${esc(election.id)}')">+ Nominate</button>
+      ${detailCandidates.length >= 2
+        ? `<button class="btn btn-ghost btn-sm" onclick="advanceToVoting('${esc(election.id)}')">Open Voting →</button>`
+        : `<span style="font-size:0.78rem;color:var(--muted);align-self:center">Need at least 2 candidates to open voting</span>`
+      }
+    </div>
+  ` : (ME ? `
+    <div class="admin-strip">
+      <button class="btn btn-ghost btn-sm" onclick="openNominateModal('${esc(election.id)}')">+ Nominate</button>
+    </div>
+  ` : "");
+
+  return `
+    <div class="section-title" style="margin-top:4px">Candidates (${detailCandidates.length})</div>
+    <div class="card" style="overflow:hidden">
+      ${candidateHtml}
+      ${adminStrip}
+    </div>
+  `;
+}
+
+function renderVotingBody(election) {
+  const candidateHtml = detailCandidates.map(c => renderCandidateCard(c, false)).join("");
+
+  let ballotHtml = "";
+  if (!ME) {
+    ballotHtml = `<div class="phase-banner voted">Sign in to cast your ballot.</div>`;
+  } else if (detailHasVoted) {
+    ballotHtml = `<div class="phase-banner voted">✓ You've voted. Results will be revealed when voting closes.</div>`;
+  } else {
+    const btnLabel = election.voting_method === "ranked_choice" ? "Rank Candidates" : "Cast Ballot";
+    const onclick  = election.voting_method === "ranked_choice"
+      ? `openRankedBallotModal('${esc(election.id)}')`
+      : `openMajorityBallotModal('${esc(election.id)}')`;
+    ballotHtml = `
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="${onclick}">${btnLabel}</button>
+        <span style="font-size:0.8rem;color:var(--muted)">Your ballot is secret</span>
+      </div>
+    `;
+  }
+
+  const adminStrip = canAdmin() ? `
+    <div class="admin-strip">
+      <button class="btn btn-ghost btn-sm" onclick="closeVoting('${esc(election.id)}')">🔒 Close Voting</button>
+    </div>
+  ` : "";
+
+  return `
+    <div id="ballot-section">${ballotHtml}</div>
+    <div class="section-title">Candidates (${detailCandidates.length})</div>
+    <div class="card" style="overflow:hidden">
+      ${candidateHtml}
+      ${adminStrip}
+    </div>
+  `;
+}
+
+function renderResultsBody(election, phase) {
+  if (detailCandidates.length === 0) {
+    return `<div class="empty"><div class="empty-icon">📋</div><p>No candidates.</p></div>`;
+  }
+
+  let resultsHtml = "";
+
+  if (election.voting_method === "ranked_choice") {
+    const { winner, rounds } = tallyRankedChoice(detailCandidates, detailBallotItems);
+    const winCandidate = winner ? detailCandidatesMap.get(winner) : null;
+    const winMember    = winCandidate ? memberById(winCandidate.member_id) : null;
+
+    if (winMember) {
+      resultsHtml += `
+        <div class="phase-banner certified" style="margin-bottom:12px;font-size:0.95rem;font-weight:600">
+          🏆 ${esc(winMember.name)} elected
+        </div>
+      `;
+    } else if (detailBallotCount > 0) {
+      resultsHtml += `<div class="phase-banner closed" style="margin-bottom:12px">No winner — tie or inconclusive result.</div>`;
+    }
+
+    resultsHtml += `<div class="section-title">Results</div>`;
+    resultsHtml += `<div class="card" style="overflow:hidden">`;
+    resultsHtml += detailCandidates.map(c => {
+      const m = memberById(c.member_id);
+      const isWinner = c.id === winner;
+      return `
+        <div class="candidate-card" style="margin-bottom:0;border-radius:0;border-left:none;border-right:none;border-top:none;box-shadow:none;border-bottom:1px solid var(--border);padding:12px 16px">
+          <div class="candidate-top">
+            <span class="avatar-sm" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
+            <span class="candidate-name">${esc(m?.name ?? "Unknown")}${isWinner ? " 🏆" : ""}</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+    resultsHtml += `</div>`;
+
+    if (rounds.length > 0) {
+      resultsHtml += `
+        <div class="section-title" style="margin-top:12px">IRV Rounds</div>
+        <div class="irv-rounds">
+          ${rounds.map((round, i) => {
+            const total = Object.values(round.counts).reduce((s, n) => s + n, 0);
+            const eliminated = round.eliminated ? detailCandidatesMap.get(round.eliminated) : null;
+            const elimMember = eliminated ? memberById(eliminated.member_id) : null;
+            return `
+              <div class="irv-round">
+                <div class="irv-round-header">
+                  <span>Round ${i + 1}</span>
+                  ${elimMember ? `<span style="color:var(--red)">Eliminated: ${esc(elimMember.name)}</span>` : ""}
+                </div>
+                ${Object.entries(round.counts).map(([cid, count]) => {
+                  const cand = detailCandidatesMap.get(cid);
+                  const mem  = cand ? memberById(cand.member_id) : null;
+                  const pct  = total > 0 ? Math.round((count / total) * 100) : 0;
+                  return `
+                    <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:0.82rem;display:flex;align-items:center;gap:8px">
+                      <span style="min-width:100px">${esc(mem?.name ?? "?")}</span>
+                      <div style="flex:1"><div class="result-bar-wrap"><div class="result-bar-fill${cid === winner && i === rounds.length - 1 ? " winner" : ""}" style="width:${pct}%"></div></div></div>
+                      <span style="min-width:50px;text-align:right;color:var(--muted)">${count} (${pct}%)</span>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+  } else {
+    // Majority results — derive winner from already-computed counts to avoid double-tally
+    const counts  = tallyMajority(detailCandidates, detailBallotItems);
+    const sorted  = Object.entries(counts).sort(([, a], [, b]) => b - a);
+    const win     = sorted.length > 0 && sorted[0][1] > 0 && (sorted.length < 2 || sorted[0][1] !== sorted[1][1]) ? sorted[0][0] : null;
+    const maxVotes = Math.max(...Object.values(counts), 1);
+    const winCandidate = win ? detailCandidatesMap.get(win) : null;
+    const winMember    = winCandidate ? memberById(winCandidate.member_id) : null;
+
+    if (winMember) {
+      resultsHtml += `
+        <div class="phase-banner certified" style="margin-bottom:12px;font-size:0.95rem;font-weight:600">
+          🏆 ${esc(winMember.name)} elected
+        </div>
+      `;
+    } else if (detailBallotCount > 0) {
+      resultsHtml += `<div class="phase-banner closed" style="margin-bottom:12px">Tie — no winner determined.</div>`;
+    }
+
+    resultsHtml += `<div class="section-title">Results</div>`;
+    resultsHtml += `<div class="card" style="overflow:hidden">`;
+    const sorted = [...detailCandidates].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0));
+    resultsHtml += sorted.map(c => {
+      const m    = memberById(c.member_id);
+      const v    = counts[c.id] ?? 0;
+      const pct  = detailBallotCount > 0 ? Math.round((v / detailBallotCount) * 100) : 0;
+      const barPct = Math.round((v / maxVotes) * 100);
+      const isWin = c.id === win;
+      return `
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span class="avatar-sm" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
+            <span style="font-weight:600;font-size:0.95rem">${esc(m?.name ?? "Unknown")}${isWin ? " 🏆" : ""}</span>
+            <span style="margin-left:auto;font-size:0.82rem;color:var(--muted)">${v} vote${v !== 1 ? "s" : ""} (${pct}%)</span>
+          </div>
+          <div class="result-bar-wrap">
+            <div class="result-bar-fill${isWin ? " winner" : ""}" style="width:${barPct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    resultsHtml += `</div>`;
+  }
+
+  const participationHtml = `<p class="participation">${detailBallotCount} of ${members.length} member${members.length !== 1 ? "s" : ""} voted</p>`;
+
+  const adminStrip = canAdmin() && phase === "closed" ? `
+    <div style="margin-top:16px">
+      <button class="btn btn-success" onclick="certifyResults('${esc(election.id)}')">✓ Certify Results</button>
+    </div>
+  ` : "";
+
+  return resultsHtml + participationHtml + adminStrip;
+}
+
+function renderCandidateCard(c, showStatement = true) {
+  const m = memberById(c.member_id);
+  const nominator = memberById(c.nominated_by);
+  const selfNom = c.nominated_by === c.member_id;
+  return `
+    <div class="candidate-card">
+      <div class="candidate-top">
+        <span class="avatar" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
+        <div>
+          <div class="candidate-name">${esc(m?.name ?? "Unknown")}</div>
+          <div class="candidate-nominated">
+            ${selfNom ? "Self-nominated" : `Nominated by ${esc(nominator?.name ?? "someone")}`}
+          </div>
+        </div>
+      </div>
+      ${showStatement && c.statement ? `<div class="candidate-statement">"${esc(c.statement)}"</div>` : ""}
+    </div>
+  `;
+}
+
+// ─── Targeted DOM patch after casting a ballot ────────────────────────────────
+function patchAfterVote() {
+  const election = electionsMap.get(currentElectionId);
+  const bannerEl = document.getElementById("phase-banner");
+  const ballotEl = document.getElementById("ballot-section");
+  if (!election || !bannerEl || !ballotEl) { render(); return; }
+
+  bannerEl.innerHTML = `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""} · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`;
+  ballotEl.innerHTML = `<div class="phase-banner voted">✓ You've voted. Results will be revealed when voting closes.</div>`;
+}
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
+window.openElection = async function(id) {
+  currentElectionId = id;
+  document.getElementById("root").innerHTML = `<div class="loading">Loading…</div>`;
+  await loadDetailData(id);
+  render();
+};
+window.backToList   = function() { currentElectionId = null; render(); };
+window.setListTab   = function(t) { listTab = t; render(); };
+window.openCreateElectionModal = openCreateElectionModal;
+window.openNominateModal       = openNominateModal;
+window.advanceToVoting         = async function(id) { await advanceToVoting(id); };
+window.closeVoting             = async function(id) { await closeVoting(id); };
+window.certifyResults          = async function(id) { await certifyResults(id); };
+window.openMajorityBallotModal = openMajorityBallotModal;
+window.openRankedBallotModal   = openRankedBallotModal;
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  if (currentElectionId) {
+    const el = electionsMap.get(currentElectionId);
+    if (el) { renderDetail(el); return; }
+    currentElectionId = null;
+  }
+  renderList();
+}
+
+// ─── Deep linking ─────────────────────────────────────────────────────────────
+function handleDeepLink() {
+  const electionId = new URLSearchParams(window.location.search).get("electionId");
+  if (electionId) window.openElection(electionId);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(async () => {
+  await Promise.all([loadMembers(), loadElections()]);
+  rebuildMembersMap();
+  rebuildElectionsMap();
+  render();
+  handleDeepLink();
+})();
+</script>
+</body>
+</html>

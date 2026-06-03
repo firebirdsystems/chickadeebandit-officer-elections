@@ -1,0 +1,16 @@
+{
+  "name": "chickadee-app-officer-elections",
+  "version": "1.0.0",
+  "description": "Officer Elections app for Chickadee Bandit",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "node dev.mjs"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  },
+  "license": "MIT"
+}

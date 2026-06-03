@@ -1,0 +1,21 @@
+{
+  "id": "officer-elections",
+  "name": "Officer Elections",
+  "version": "1.0.0",
+  "description": "Run officer elections with candidate nominations, secret ballots, majority or ranked-choice voting, and formal result certification.",
+  "entrypoint": "index.html",
+  "runtime": "static",
+  "category": "organization",
+  "tags": ["elections", "voting", "officers", "governance", "org"],
+  "data_access": {
+    "reads": ["family.members"],
+    "writes": []
+  },
+  "permissions": {
+    "default_audience": "everyone",
+    "requires_approval": false
+  },
+  "storage": "db",
+  "nav": { "label": "Elections" },
+  "icon": "🗳️"
+}
