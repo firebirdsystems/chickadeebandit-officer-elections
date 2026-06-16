@@ -427,7 +427,7 @@ async function loadElections() {
   }
   try {
     const res = await db(
-      `SELECT * FROM oe_elections WHERE household_id = current_setting('app.household_id', true)::uuid ORDER BY created_at DESC`
+      `SELECT * FROM app_officer_elections__oe_elections ORDER BY created_at DESC`
     );
     elections = res.rows ?? [];
   } catch { elections = []; }
@@ -480,9 +480,9 @@ async function loadDetailData(electionId) {
 
   try {
     const [candRes, ballotCountRes, hasVotedRes] = await Promise.all([
-      db(`SELECT * FROM oe_candidates WHERE election_id = ? AND household_id = current_setting('app.household_id', true)::uuid ORDER BY created_at`, [electionId]),
-      db(`SELECT COUNT(*) AS cnt FROM oe_ballots WHERE election_id = ? AND household_id = current_setting('app.household_id', true)::uuid`, [electionId]),
-      ME ? db(`SELECT id FROM oe_ballots WHERE election_id = ? AND voter_id = ? AND household_id = current_setting('app.household_id', true)::uuid LIMIT 1`, [electionId, ME.id]) : Promise.resolve({ rows: [] }),
+      db(`SELECT * FROM app_officer_elections__oe_candidates WHERE election_id = ? ORDER BY created_at`, [electionId]),
+      db(`SELECT COUNT(*) AS cnt FROM app_officer_elections__oe_ballots WHERE election_id = ?`, [electionId]),
+      ME ? db(`SELECT voter_id FROM app_officer_elections__oe_ballot_receipts WHERE election_id = ? AND voter_id = ? LIMIT 1`, [electionId, ME.id]) : Promise.resolve({ rows: [] }),
     ]);
     detailCandidates  = candRes.rows ?? [];
     detailBallotCount = Number(ballotCountRes.rows?.[0]?.cnt ?? 0);
@@ -493,7 +493,7 @@ async function loadDetailData(electionId) {
     const phase = election ? electionPhase(election) : null;
     if (phase === "closed" || phase === "certified") {
       const itemsRes = await db(
-        `SELECT bi.ballot_id, bi.candidate_id, bi.rank FROM oe_ballot_items bi JOIN oe_ballots b ON b.id = bi.ballot_id WHERE b.election_id = ? AND b.household_id = current_setting('app.household_id', true)::uuid`,
+        `SELECT bi.ballot_id, bi.candidate_id, bi.rank FROM app_officer_elections__oe_ballot_items bi JOIN app_officer_elections__oe_ballots b ON b.id = bi.ballot_id WHERE b.election_id = ?`,
         [electionId]
       );
       detailBallotItems = itemsRes.rows ?? [];
@@ -523,7 +523,7 @@ async function createElection(data) {
   const id = crypto.randomUUID();
   const initialStatus = data.hasNominations ? "nominations" : "voting";
   await db(
-    `INSERT INTO oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at)
+    `INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [id, data.title, data.office, data.votingMethod, data.hasNominations ? 1 : 0,
      data.nominationsDeadline || null, data.votingDeadline,
@@ -550,7 +550,7 @@ async function createElection(data) {
 async function nominateCandidate(electionId, memberId, statement) {
   const id = crypto.randomUUID();
   await db(
-    `INSERT INTO oe_candidates (id, election_id, member_id, statement, nominated_by, created_at)
+    `INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [id, electionId, memberId, statement, ME?.id ?? "system", new Date().toISOString()]
   );
@@ -564,7 +564,7 @@ async function nominateCandidate(electionId, memberId, statement) {
 }
 
 async function advanceToVoting(electionId) {
-  await db(`UPDATE oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
+  await db(`UPDATE app_officer_elections__oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
   const election = electionsMap.get(electionId);
   if (election) election.status = "voting";
   await Promise.all([
@@ -583,7 +583,7 @@ async function advanceToVoting(electionId) {
 }
 
 async function closeVoting(electionId) {
-  await db(`UPDATE oe_elections SET status = 'closed' WHERE id = ?`, [electionId]);
+  await db(`UPDATE app_officer_elections__oe_elections SET status = 'closed' WHERE id = ?`, [electionId]);
   const election = electionsMap.get(electionId);
   if (election) election.status = "closed";
   await loadDetailData(electionId);
@@ -593,12 +593,17 @@ async function closeVoting(electionId) {
 async function castMajorityBallot(electionId, candidateId) {
   const ballotId = crypto.randomUUID();
   const itemId   = crypto.randomUUID();
+  const now = new Date().toISOString();
   await db(
-    `INSERT INTO oe_ballots (id, election_id, voter_id, created_at) VALUES (?, ?, ?, ?)`,
-    [ballotId, electionId, ME.id, new Date().toISOString()]
+    `INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, ?)`,
+    [electionId, ME.id, now]
   );
   await db(
-    `INSERT INTO oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, 1)`,
+    `INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, ?)`,
+    [ballotId, electionId, now]
+  );
+  await db(
+    `INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, 1)`,
     [itemId, ballotId, candidateId]
   );
   detailHasVoted    = true;
@@ -609,12 +614,17 @@ async function castMajorityBallot(electionId, candidateId) {
 
 async function castRankedBallot(electionId, rankedCandidateIds) {
   const ballotId = crypto.randomUUID();
+  const now = new Date().toISOString();
   await db(
-    `INSERT INTO oe_ballots (id, election_id, voter_id, created_at) VALUES (?, ?, ?, ?)`,
-    [ballotId, electionId, ME.id, new Date().toISOString()]
+    `INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, ?)`,
+    [electionId, ME.id, now]
+  );
+  await db(
+    `INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, ?)`,
+    [ballotId, electionId, now]
   );
   await Promise.all(rankedCandidateIds.map((cid, i) =>
-    db(`INSERT INTO oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)`,
+    db(`INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)`,
        [crypto.randomUUID(), ballotId, cid, i + 1])
   ));
   detailHasVoted    = true;
@@ -626,7 +636,7 @@ async function castRankedBallot(electionId, rankedCandidateIds) {
 async function certifyResults(electionId) {
   const now = new Date().toISOString();
   await db(
-    `UPDATE oe_elections SET status = 'certified', certified_by = ?, certified_at = ? WHERE id = ?`,
+    `UPDATE app_officer_elections__oe_elections SET status = 'certified', certified_by = ?, certified_at = ? WHERE id = ?`,
     [ME.id, now, electionId]
   );
   const election = electionsMap.get(electionId);

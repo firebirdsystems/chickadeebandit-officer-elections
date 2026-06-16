@@ -16,6 +16,13 @@
     "requires_approval": false
   },
   "storage": "db",
+  "row_policies": {
+    "oe_ballot_receipts": {
+      "kind": "owner_only",
+      "member_column": "voter_id",
+      "adults_bypass": false
+    }
+  },
   "nav": { "label": "Elections" },
   "icon": "🗳️"
 }
