@@ -511,7 +511,7 @@ async function loadDetailData(electionId) {
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 async function notify(title, body) {
-  await fetch("/api/notifications/send", {
+  await fetch(window.__NOTIFY_URL ?? "/api/notifications/send", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, body, url: `/run/${APP_ID}` }),
@@ -532,7 +532,7 @@ async function createElection(data) {
   await Promise.all([
     loadElections().then(rebuildElectionsMap),
     notify(`New election: ${data.office}`, `A new officer election has been created for ${data.office}. ${data.hasNominations ? "Nominations are now open." : "Voting is now open."}`),
-    fetch("/api/activity", {
+    fetch(window.__ACTIVITY_URL ?? "/api/activity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -569,7 +569,7 @@ async function advanceToVoting(electionId) {
   if (election) election.status = "voting";
   await Promise.all([
     notify("Voting is now open", `Voting has opened for ${election?.office ?? "an officer position"}. Cast your ballot!`),
-    fetch("/api/activity", {
+    fetch(window.__ACTIVITY_URL ?? "/api/activity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -645,7 +645,7 @@ async function certifyResults(electionId) {
   const winMember = win ? memberById(detailCandidatesMap.get(win)?.member_id) : null;
   await Promise.all([
     notify("Election certified", `Results for ${election?.office ?? "officer election"} have been certified.${winMember ? ` Winner: ${winMember.name}.` : ""}`),
-    fetch("/api/activity", {
+    fetch(window.__ACTIVITY_URL ?? "/api/activity", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
