@@ -327,6 +327,7 @@ import {
 const CONTEXT  = window.__CONTEXT_URL ?? "";
 const DB       = window.__DB_URL      ?? "";
 const APP_ID   = window.__APP_ID      ?? "officer-elections";
+const BALLOT_RESULTS = window.__BALLOT_RESULTS_URL ?? "";
 const ME       = window.__CURRENT_MEMBER ?? null;
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -479,26 +480,25 @@ async function loadDetailData(electionId) {
   }
 
   try {
-    const [candRes, ballotCountRes, hasVotedRes] = await Promise.all([
+    const [candRes, hasVotedRes] = await Promise.all([
       db(`SELECT * FROM app_officer_elections__oe_candidates WHERE election_id = ? ORDER BY created_at`, [electionId]),
-      db(`SELECT COUNT(*) AS cnt FROM app_officer_elections__oe_ballots WHERE election_id = ?`, [electionId]),
       ME ? db(`SELECT voter_id FROM app_officer_elections__oe_ballot_receipts WHERE election_id = ? AND voter_id = ? LIMIT 1`, [electionId, ME.id]) : Promise.resolve({ rows: [] }),
     ]);
     detailCandidates  = candRes.rows ?? [];
-    detailBallotCount = Number(ballotCountRes.rows?.[0]?.cnt ?? 0);
     detailHasVoted    = (hasVotedRes.rows?.length ?? 0) > 0;
 
     // Only load ballot items (for results) when closed or certified
     const election = electionsMap.get(electionId);
     const phase = election ? electionPhase(election) : null;
     if (phase === "closed" || phase === "certified") {
-      const itemsRes = await db(
-        `SELECT bi.ballot_id, bi.candidate_id, bi.rank FROM app_officer_elections__oe_ballot_items bi JOIN app_officer_elections__oe_ballots b ON b.id = bi.ballot_id WHERE b.election_id = ?`,
-        [electionId]
-      );
-      detailBallotItems = itemsRes.rows ?? [];
+      const response = await fetch(`${BALLOT_RESULTS}?session_id=${encodeURIComponent(electionId)}`);
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error ?? "Unable to load election results");
+      detailBallotItems = body.rows ?? [];
+      detailBallotCount = Number(body.ballot_count ?? 0);
     } else {
       detailBallotItems = [];
+      detailBallotCount = 0;
     }
     rebuildCandidatesMap();
   } catch {
@@ -591,21 +591,18 @@ async function closeVoting(electionId) {
 }
 
 async function castMajorityBallot(electionId, candidateId) {
-  const ballotId = crypto.randomUUID();
-  const itemId   = crypto.randomUUID();
-  const now = new Date().toISOString();
-  await db(
-    `INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, ?)`,
-    [electionId, ME.id, now]
-  );
-  await db(
-    `INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, ?)`,
-    [ballotId, electionId, now]
-  );
-  await db(
-    `INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, 1)`,
-    [itemId, ballotId, candidateId]
-  );
+  const res = await fetch(window.__CAST_BALLOT_URL ?? `/run/${APP_ID}/api/cast-ballot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: electionId,
+      items: [{ candidate_id: candidateId, rank: 1 }],
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? "Failed to cast ballot");
+  }
   detailHasVoted    = true;
   detailBallotCount = detailBallotCount + 1;
   closeModal();
@@ -613,20 +610,18 @@ async function castMajorityBallot(electionId, candidateId) {
 }
 
 async function castRankedBallot(electionId, rankedCandidateIds) {
-  const ballotId = crypto.randomUUID();
-  const now = new Date().toISOString();
-  await db(
-    `INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, ?)`,
-    [electionId, ME.id, now]
-  );
-  await db(
-    `INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, ?)`,
-    [ballotId, electionId, now]
-  );
-  await Promise.all(rankedCandidateIds.map((cid, i) =>
-    db(`INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)`,
-       [crypto.randomUUID(), ballotId, cid, i + 1])
-  ));
+  const res = await fetch(window.__CAST_BALLOT_URL ?? `/run/${APP_ID}/api/cast-ballot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      session_id: electionId,
+      items: rankedCandidateIds.map((cid, i) => ({ candidate_id: cid, rank: i + 1 })),
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? "Failed to cast ballot");
+  }
   detailHasVoted    = true;
   detailBallotCount = detailBallotCount + 1;
   closeModal();
@@ -995,7 +990,7 @@ function renderDetail(election) {
   // Phase banner
   const bannerText = {
     nominations: `📋 Nominations open${election.nominations_deadline ? ` · ${deadlineLabel(election.nominations_deadline) ?? ""}` : ""}`,
-    voting:      `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""} · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
+    voting:      `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`,
     closed:      `🔒 Voting closed · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
     certified:   `✅ Certified by ${esc(certifier?.name ?? "admin")}${election.certified_at ? ` on ${new Date(election.certified_at).toLocaleDateString()}` : ""}`,
   };
@@ -1250,7 +1245,7 @@ function patchAfterVote() {
   const ballotEl = document.getElementById("ballot-section");
   if (!election || !bannerEl || !ballotEl) { render(); return; }
 
-  bannerEl.innerHTML = `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""} · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`;
+  bannerEl.innerHTML = `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`;
   ballotEl.innerHTML = `<div class="phase-banner voted">✓ You've voted. Results will be revealed when voting closes.</div>`;
 }
 

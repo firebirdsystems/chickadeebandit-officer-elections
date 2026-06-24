@@ -17,11 +17,54 @@
   },
   "storage": "db",
   "row_policies": {
+    "oe_elections": {
+      "kind": "adult_writable"
+    },
+    "oe_candidates": {
+      "kind": "adult_writable"
+    },
+    "oe_ballots": {
+      "kind": "endpoint_only",
+      "read": "none"
+    },
+    "oe_ballot_items": {
+      "kind": "endpoint_only",
+      "read": "none"
+    },
     "oe_ballot_receipts": {
       "kind": "owner_only",
       "member_column": "voter_id",
-      "adults_bypass": false
+      "adults_bypass": false,
+      "member_can_update": false,
+      "endpoint_writes_only": true
     }
+  },
+  "anonymous_ballot": {
+    "receipt_table": "oe_ballot_receipts",
+    "session_column": "election_id",
+    "member_column": "voter_id",
+    "created_at_column": "created_at",
+    "ballot_table": "oe_ballots",
+    "ballot_session_column": "election_id",
+    "ballot_id_column": "id",
+    "ballot_created_at_column": "created_at",
+    "items_table": "oe_ballot_items",
+    "item_id_column": "id",
+    "ballot_fk_column": "ballot_id",
+    "candidate_column": "candidate_id",
+    "rank_column": "rank",
+    "session_table": "oe_elections",
+    "session_id_column": "id",
+    "session_status_column": "status",
+    "session_open_values": ["voting"],
+    "result_visible_values": ["closed", "certified"],
+    "session_deadline_column": "voting_deadline",
+    "session_voting_method_column": "voting_method",
+    "majority_method_values": ["majority"],
+    "ranked_method_values": ["ranked_choice"],
+    "candidate_table": "oe_candidates",
+    "candidate_session_column": "election_id",
+    "candidate_id_column": "id"
   },
   "nav": { "label": "Elections" },
   "icon": "🗳️"
