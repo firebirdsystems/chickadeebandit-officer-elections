@@ -1,14 +1,14 @@
 {
   "id": "officer-elections",
   "name": "Officer Elections",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Run officer elections with candidate nominations, secret ballots, majority or ranked-choice voting, and formal result certification.",
   "entrypoint": "index.html",
   "runtime": "static",
   "category": "organization",
   "tags": ["elections", "voting", "officers", "governance", "org"],
   "data_access": {
-    "reads": ["family.members"],
+    "reads": ["family.members", "family.groups"],
     "writes": []
   },
   "permissions": {
@@ -17,11 +17,24 @@
   },
   "storage": "db",
   "row_policies": {
+    "settings": {
+      "kind": "app_config"
+    },
     "oe_elections": {
-      "kind": "adult_writable"
+      "kind": "owner_or_visibility",
+      "member_column": "created_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
     },
     "oe_candidates": {
-      "kind": "adult_writable"
+      "kind": "owner_or_visibility",
+      "member_column": "nominated_by",
+      "visibility_column": "visibility",
+      "everyone_values": ["everyone"],
+      "write_privileged_only": true,
+      "bypass_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
     },
     "oe_ballots": {
       "kind": "endpoint_only",
@@ -65,6 +78,10 @@
     "candidate_table": "oe_candidates",
     "candidate_session_column": "election_id",
     "candidate_id_column": "id"
+  },
+  "admin_config": {
+    "settings_table": "settings",
+    "keys": ["officials_group_id"]
   },
   "nav": { "label": "Elections" },
   "icon": "🗳️"

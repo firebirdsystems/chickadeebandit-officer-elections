@@ -329,12 +329,17 @@ const DB       = window.__DB_URL      ?? "";
 const APP_ID   = window.__APP_ID      ?? "officer-elections";
 const BALLOT_RESULTS = window.__BALLOT_RESULTS_URL ?? "";
 const ME       = window.__CURRENT_MEMBER ?? null;
+const IS_ADMIN = window.__IS_ADMIN ?? false;
+const ADMIN_CONFIG = window.__ADMIN_CONFIG_URL ?? "";
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let members           = [];
+let groups            = [];
+let settings          = { officials_group_id: "" };
 let elections         = [];
 let currentElectionId = null;
 let listTab           = "active"; // "active" | "completed"
+let showSettings      = false;    // settings view toggle (admin-only)
 
 // Loaded per-election when detail view opens
 let detailCandidates  = [];
@@ -359,12 +364,28 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error ?? `Request failed (${res.status})`);
+  }
   return res.json();
 }
 
 // ─── Member helpers ───────────────────────────────────────────────────────────
 function memberById(id) { return membersMap.get(id); }
-function canAdmin() { return isAdult(ME); }
+
+// Election management (create, nominate, advance, close, certify) is restricted to
+// the configured "election officials" group — mirrors the server-side
+// `write_privileged_only` policy on oe_elections / oe_candidates. There is NO
+// "all adults" fallback: until an admin designates the group, isPrivileged is
+// false for everyone server-side, so management stays disabled here too (otherwise
+// every action would be a silent 403). Voting and viewing results remain open to
+// all signed-in members.
+function canManageElections() {
+  if (!ME || !settings.officials_group_id) return false;
+  const g = groups.find(g => g.id === settings.officials_group_id);
+  return !!g && g.memberIds.includes(ME.id);
+}
 
 // ─── Data loading ─────────────────────────────────────────────────────────────
 async function loadMembers() {
@@ -376,12 +397,28 @@ async function loadMembers() {
       { id: "demo-4", name: "Morgan Lee",     role: "adult" },
       { id: "demo-5", name: "Taylor Nguyen",  role: "adult" },
     ];
+    // Demo: pretend the current member runs elections so the management UI is visible.
+    groups   = [{ id: "demo-officials", name: "Election Committee", memberIds: members.map(m => m.id) }];
+    settings = { officials_group_id: "demo-officials" };
     return;
   }
   try {
-    const res = await fetch(`${CONTEXT}?keys=family.members`);
-    members = ((await res.json())["family.members"]) ?? [];
-  } catch { members = []; }
+    const res = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
+    const data = await res.json();
+    members = data["family.members"] ?? [];
+    groups  = data["family.groups"]  ?? [];
+  } catch { members = []; groups = []; }
+}
+
+// The officials_group_id pointer lives in the `app_config` settings table:
+// everyone may read it, but it is writable ONLY through the admin-gated
+// /api/admin-config endpoint (direct SQL writes are rejected).
+async function loadSettings() {
+  if (!DB) return;
+  try {
+    const r = await db(`SELECT value AS officials_group_id FROM app_officer_elections__settings WHERE key = 'officials_group_id' LIMIT 1`);
+    settings = r?.rows?.[0] ?? { officials_group_id: "" };
+  } catch { settings = { officials_group_id: "" }; }
 }
 
 async function loadElections() {
@@ -924,6 +961,77 @@ function phaseBadge(phase) {
   return map[phase] ?? "";
 }
 
+// Shown on the list when no officials group is configured yet — management is
+// disabled for everyone until an admin designates one.
+function renderOfficialsNotice() {
+  if (settings.officials_group_id) return "";
+  return `
+    <div class="phase-banner closed" style="margin-bottom:12px">
+      🔒 No election officials group is set. ${IS_ADMIN
+        ? `<a href="#" onclick="openSettings();return false" style="color:inherit;font-weight:700;text-decoration:underline">Designate one</a> to create and manage elections.`
+        : "An administrator must designate one before elections can be created or managed."}
+    </div>`;
+}
+
+function renderSettingsView() {
+  // Only a hub admin may appoint the officials group — the /api/admin-config
+  // endpoint enforces this server-side, so the editable control is admin-only here.
+  const body = !IS_ADMIN
+    ? `<div class="empty">Admin access required to configure the election officials.</div>`
+    : (() => {
+        const opts = [
+          `<option value="" ${!settings.officials_group_id ? "selected" : ""}>— None (management disabled) —</option>`,
+          ...groups.map(g => `<option value="${esc(g.id)}" ${settings.officials_group_id === g.id ? "selected" : ""}>${esc(g.name)}</option>`),
+        ].join("");
+        return `
+          <div class="card"><div class="card-body">
+            <div class="section-title">Election Officials Group</div>
+            <p style="font-size:.85rem;color:var(--muted);margin:8px 0 12px">
+              Members of the selected group can create elections, nominate candidates, open and
+              close voting, and certify results. Everyone else can vote and view results only.
+            </p>
+            <div class="form-group">
+              <label>Officials group</label>
+              <select id="f-officials" onchange="saveOfficialsGroup(this.value)">${opts}</select>
+            </div>
+            ${groups.length === 0 ? `<p style="font-size:.8rem;color:var(--amber)">No groups exist yet. Create a group in your hub settings first.</p>` : ""}
+            <div id="settings-error" class="error-msg" style="display:none"></div>
+          </div></div>`;
+      })();
+
+  document.getElementById("root").innerHTML = `
+    <button class="back-btn" onclick="closeSettings()">← All Elections</button>
+    <div class="page-header"><div><h1>⚙️ Election Settings</h1></div></div>
+    ${body}`;
+}
+
+window.openSettings  = function() { showSettings = true;  currentElectionId = null; render(); };
+window.closeSettings = function() { showSettings = false; render(); };
+
+window.saveOfficialsGroup = async function(groupId) {
+  // Written ONLY through the admin-gated /api/admin-config endpoint; the app_config
+  // row policy rejects any app-originated SQL write to the settings pointer.
+  const prev = settings.officials_group_id;
+  settings.officials_group_id = groupId;
+  try {
+    const res = await fetch(ADMIN_CONFIG, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "officials_group_id", value: groupId }),
+    });
+    if (!res.ok) {
+      let m = "Save failed";
+      try { m = (await res.json()).error ?? m; } catch {}
+      throw new Error(m);
+    }
+    render();
+  } catch (e) {
+    settings.officials_group_id = prev;
+    const errEl = document.getElementById("settings-error");
+    if (errEl) showErr(errEl, e.message ?? "Save failed");
+  }
+};
+
 function renderList() {
   // Compute phase once per election — avoid 3× calls per card (filter×2 + render)
   const withPhase  = elections.map(e => ({ election: e, phase: electionPhase(e) }));
@@ -931,13 +1039,18 @@ function renderList() {
   const completed  = withPhase.filter(x => x.phase === "certified");
   const showing    = listTab === "active" ? active : completed;
 
+  const canManage = canManageElections();
   const header = `
     <div class="page-header">
       <div>
         <h1>🗳️ Officer Elections</h1>
       </div>
-      ${canAdmin() ? `<button class="btn btn-primary btn-sm" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
+      <div style="display:flex;gap:8px;align-items:center">
+        ${canManage ? `<button class="btn btn-primary btn-sm" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
+        ${IS_ADMIN ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials">⚙️</button>` : ""}
+      </div>
     </div>
+    ${renderOfficialsNotice()}
     <div class="tabs">
       <button class="tab ${listTab === "active" ? "active" : ""}" onclick="setListTab('active')">
         Active${active.length > 0 ? ` (${active.length})` : ""}
@@ -952,7 +1065,7 @@ function renderList() {
     ? `<div class="empty">
         <div class="empty-icon">${listTab === "active" ? "🗳️" : "📋"}</div>
         <p>${listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
-        ${listTab === "active" && canAdmin() ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
+        ${listTab === "active" && canManage ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
        </div>`
     : showing.map(({ election, phase }) => renderElectionCard(election, phase)).join("");
 
@@ -1033,7 +1146,10 @@ function renderNominationsBody(election) {
     ? `<div class="empty" style="padding:24px"><div class="empty-icon" style="font-size:2rem">👤</div><p>No candidates nominated yet.</p></div>`
     : detailCandidates.map(c => renderCandidateCard(c)).join("");
 
-  const adminStrip = canAdmin() ? `
+  // Nominating writes to oe_candidates, which only the officials group may write
+  // (server-enforced). Show the control only to officials so non-officials don't
+  // hit a silent 403 — and the certify/advance lifecycle stays officials-only too.
+  const adminStrip = canManageElections() ? `
     <div class="admin-strip">
       <button class="btn btn-primary btn-sm" onclick="openNominateModal('${esc(election.id)}')">+ Nominate</button>
       ${detailCandidates.length >= 2
@@ -1041,11 +1157,7 @@ function renderNominationsBody(election) {
         : `<span style="font-size:0.78rem;color:var(--muted);align-self:center">Need at least 2 candidates to open voting</span>`
       }
     </div>
-  ` : (ME ? `
-    <div class="admin-strip">
-      <button class="btn btn-ghost btn-sm" onclick="openNominateModal('${esc(election.id)}')">+ Nominate</button>
-    </div>
-  ` : "");
+  ` : "";
 
   return `
     <div class="section-title" style="margin-top:4px">Candidates (${detailCandidates.length})</div>
@@ -1077,7 +1189,7 @@ function renderVotingBody(election) {
     `;
   }
 
-  const adminStrip = canAdmin() ? `
+  const adminStrip = canManageElections() ? `
     <div class="admin-strip">
       <button class="btn btn-ghost btn-sm" onclick="closeVoting('${esc(election.id)}')">🔒 Close Voting</button>
     </div>
@@ -1184,8 +1296,8 @@ function renderResultsBody(election, phase) {
 
     resultsHtml += `<div class="section-title">Results</div>`;
     resultsHtml += `<div class="card" style="overflow:hidden">`;
-    const sorted = [...detailCandidates].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0));
-    resultsHtml += sorted.map(c => {
+    const sortedCandidates = [...detailCandidates].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0));
+    resultsHtml += sortedCandidates.map(c => {
       const m    = memberById(c.member_id);
       const v    = counts[c.id] ?? 0;
       const pct  = detailBallotCount > 0 ? Math.round((v / detailBallotCount) * 100) : 0;
@@ -1209,7 +1321,7 @@ function renderResultsBody(election, phase) {
 
   const participationHtml = `<p class="participation">${detailBallotCount} of ${members.length} member${members.length !== 1 ? "s" : ""} voted</p>`;
 
-  const adminStrip = canAdmin() && phase === "closed" ? `
+  const adminStrip = canManageElections() && phase === "closed" ? `
     <div style="margin-top:16px">
       <button class="btn btn-success" onclick="certifyResults('${esc(election.id)}')">✓ Certify Results</button>
     </div>
@@ -1270,6 +1382,7 @@ function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
+  if (showSettings) { renderSettingsView(); return; }
   if (currentElectionId) {
     const el = electionsMap.get(currentElectionId);
     if (el) { renderDetail(el); return; }
@@ -1286,7 +1399,7 @@ function handleDeepLink() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async () => {
-  await Promise.all([loadMembers(), loadElections()]);
+  await Promise.all([loadMembers(), loadElections(), loadSettings()]);
   rebuildMembersMap();
   rebuildElectionsMap();
   render();
