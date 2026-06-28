@@ -321,6 +321,7 @@ import { memberColor, initial, esc, isAdult } from "/hub-sdk.js";
 import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
+  canManageElections as _canManageElections,
 } from "./logic.js";
 
 // ─── Runtime globals ──────────────────────────────────────────────────────────
@@ -382,9 +383,7 @@ function memberById(id) { return membersMap.get(id); }
 // every action would be a silent 403). Voting and viewing results remain open to
 // all signed-in members.
 function canManageElections() {
-  if (!ME || !settings.officials_group_id) return false;
-  const g = groups.find(g => g.id === settings.officials_group_id);
-  return !!g && g.memberIds.includes(ME.id);
+  return _canManageElections(ME, groups, settings.officials_group_id);
 }
 
 // ─── Data loading ─────────────────────────────────────────────────────────────

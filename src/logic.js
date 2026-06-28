@@ -1,6 +1,27 @@
 export { memberColor, initial, esc, isAdult, formatRelativeDate } from "./shared.js";
 
 /**
+ * Whether `me` may manage elections and candidates — mirrors the server-side
+ * `write_privileged_only` policy on oe_elections / oe_candidates, which is gated
+ * by the configured "election officials" group (officials_group_id).
+ *
+ * MUST match the hub's privileged resolution exactly: privileged IFF the group
+ * is configured, still exists, and the member is in it. There is NO "all adults"
+ * fallback when the group is unset or dangling — the hub rejects every privileged
+ * write in that state, so management stays disabled here too (otherwise every
+ * action would be a silent 403). See __tests__/helpers/privileged-gate.mjs.
+ *
+ * @param {object|null} me
+ * @param {Array}  groups
+ * @param {string|null} officialsGroupId
+ */
+export function canManageElections(me, groups, officialsGroupId) {
+  if (!me || !officialsGroupId) return false;
+  const g = groups.find(g => g.id === officialsGroupId);
+  return !!g && g.memberIds.includes(me.id);
+}
+
+/**
  * Derive the effective phase of an election by reconciling the stored status
  * with deadline timestamps. The stored status only advances forward; deadlines
  * auto-advance the phase without requiring an explicit admin action.

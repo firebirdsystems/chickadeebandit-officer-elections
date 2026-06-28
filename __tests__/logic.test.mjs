@@ -6,7 +6,21 @@ import {
   runIRVRound,
   tallyRankedChoice,
   winnerId,
+  canManageElections,
 } from "../src/logic.js";
+import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
+
+// ── canManageElections ────────────────────────────────────────────────────────
+// Fronts the oe_elections / oe_candidates write_privileged_only policies, so it
+// must satisfy the shared privileged-gate contract (mirrors the hub: no adult
+// fallback when no officials group is configured).
+
+testPrivilegedGateContract("canManageElections", canManageElections, {
+  member:   { id: "a1", role: "adult" },
+  outsider: { id: "a3", role: "adult" },
+  groups:   [{ id: "g1", memberIds: ["a1", "a2"] }],
+  groupId:  "g1",
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
