@@ -26,7 +26,8 @@
       "visibility_column": "visibility",
       "everyone_values": ["everyone"],
       "write_privileged_only": true,
-      "privileged_groups": [{ "settings_table": "settings", "settings_key": "officials_group_id" }]
+      "privileged_groups": [{ "settings_table": "settings", "settings_key": "officials_group_id" }],
+      "frozen_when": { "status_column": "status", "locked_values": ["certified"] }
     },
     "oe_candidates": {
       "kind": "owner_or_visibility",
