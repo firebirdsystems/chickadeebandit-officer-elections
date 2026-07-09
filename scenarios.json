@@ -1,0 +1,22 @@
+{
+  "scenarios": [
+    {
+      "name": "elections and candidates are managed only by the privileged group",
+      "members": { "member": "adult" },
+      "steps": [
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_officer_elections__oe_elections SET visibility = 'everyone'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_officer_elections__oe_candidates SET visibility = 'everyone'",
+          "expect": { "status": 403 }
+        }
+      ]
+    }
+  ]
+}
