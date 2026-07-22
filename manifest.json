@@ -1,5 +1,6 @@
 {
   "id": "officer-elections",
+  "contexts": ["household", "shared_space"],
   "name": "Officer Elections",
   "version": "1.1.0",
   "description": "Run officer elections with candidate nominations, secret ballots, majority or ranked-choice voting, and formal result certification.",
