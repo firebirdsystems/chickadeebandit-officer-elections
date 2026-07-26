@@ -7,6 +7,7 @@ import {
   tallyRankedChoice,
   winnerId,
   canManageElections,
+  loadAllBallotItems,
 } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
@@ -261,5 +262,44 @@ describe("winnerId", () => {
   it("returns null when no candidates", () => {
     const election = mkElection({ voting_method: "majority" });
     expect(winnerId(election, [], [])).toBeNull();
+  });
+});
+
+// ── loadAllBallotItems ────────────────────────────────────────────────────────
+// The hub pages ballot-results over ITEMS, not ballots. A ranked election
+// produces one item per candidate ranked per ballot, so a single page can hold
+// only part of the tally while ballot_count still looks small.
+describe("loadAllBallotItems", () => {
+  it("walks every page before tallying", async () => {
+    const page1 = Array.from({ length: 3 }, (_, i) => ({ ballot_id: `b-${i}`, candidate_id: "c-1", rank: 1 }));
+    const page2 = [{ ballot_id: "b-3", candidate_id: "c-2", rank: 1 }];
+    const queries = [];
+    const fetchPage = async (query) => {
+      queries.push(query);
+      return queries.length === 1
+        ? { ok: true, body: { rows: page1, ballot_count: 4, total: 4, has_more: true } }
+        : { ok: true, body: { rows: page2, ballot_count: 4, total: 4, has_more: false } };
+    };
+    const { items, ballotCount } = await loadAllBallotItems("e-1", fetchPage, 3);
+    expect(items).toHaveLength(4);
+    expect(ballotCount).toBe(4);
+    expect(queries[0]).toContain("offset=0");
+    expect(queries[1]).toContain("offset=3");
+  });
+
+  it("stops instead of looping when a page comes back empty", async () => {
+    let calls = 0;
+    const fetchPage = async () => {
+      calls++;
+      return { ok: true, body: { rows: [], ballot_count: 0, has_more: true } };
+    };
+    const { items } = await loadAllBallotItems("e-1", fetchPage, 3);
+    expect(items).toEqual([]);
+    expect(calls).toBe(1);
+  });
+
+  it("surfaces the endpoint's error rather than tallying a partial result", async () => {
+    const fetchPage = async () => ({ ok: false, body: { error: "Results are not available" } });
+    await expect(loadAllBallotItems("e-1", fetchPage)).rejects.toThrow(/Results are not available/);
   });
 });

@@ -322,6 +322,7 @@ import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
   canManageElections as _canManageElections,
+  loadAllBallotItems,
 } from "./logic.js";
 
 // ─── Runtime globals ──────────────────────────────────────────────────────────
@@ -527,11 +528,12 @@ async function loadDetailData(electionId) {
     const election = electionsMap.get(electionId);
     const phase = election ? electionPhase(election) : null;
     if (phase === "closed" || phase === "certified") {
-      const response = await fetch(`${BALLOT_RESULTS}?session_id=${encodeURIComponent(electionId)}`);
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error ?? "Unable to load election results");
-      detailBallotItems = body.rows ?? [];
-      detailBallotCount = Number(body.ballot_count ?? 0);
+      const { items, ballotCount } = await loadAllBallotItems(electionId, async (query) => {
+        const response = await fetch(`${BALLOT_RESULTS}?${query}`);
+        return { ok: response.ok, body: await response.json().catch(() => ({})) };
+      });
+      detailBallotItems = items;
+      detailBallotCount = ballotCount;
     } else {
       detailBallotItems = [];
       detailBallotCount = 0;

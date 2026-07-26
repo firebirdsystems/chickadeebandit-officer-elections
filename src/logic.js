@@ -196,3 +196,31 @@ export function winnerId(election, candidates, ballotItems) {
   if (sorted.length > 1 && sorted[0][1] === sorted[1][1]) return null;
   return sorted[0][0];
 }
+
+/** Page size used when walking the hub's paginated ballot-results endpoint. */
+export const BALLOT_PAGE_SIZE = 500;
+
+/**
+ * Fetch every ballot item for an election, following the hub's pagination.
+ *
+ * The endpoint pages over ballot ITEMS, and a ranked election has one item per
+ * candidate ranked per ballot — 60 voters over 10 candidates is 600 items, well
+ * past one page, while ballot_count is only 60. Tallying a single page would
+ * silently name the wrong winner, so every page is walked before tabulating.
+ *
+ * `fetchPage(query)` returns the parsed { ok, body } of one request.
+ */
+export async function loadAllBallotItems(electionId, fetchPage, pageSize = BALLOT_PAGE_SIZE) {
+  const items = [];
+  let ballotCount = 0;
+  for (let offset = 0; ; offset += pageSize) {
+    const query = `session_id=${encodeURIComponent(electionId)}&limit=${pageSize}&offset=${offset}`;
+    const { ok, body } = await fetchPage(query);
+    if (!ok) throw new Error(body?.error ?? "Unable to load election results");
+    const rows = body?.rows ?? [];
+    items.push(...rows);
+    ballotCount = Number(body?.ballot_count ?? 0);
+    if (!body?.has_more || rows.length === 0) break;
+  }
+  return { items, ballotCount };
+}
