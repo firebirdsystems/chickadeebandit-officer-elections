@@ -7,7 +7,7 @@ import {
   tallyRankedChoice,
   winnerId,
   canManageElections,
-  loadAllBallotItems,
+  loadAllBallotItems, searchableFields,
 } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
@@ -301,5 +301,13 @@ describe("loadAllBallotItems", () => {
   it("surfaces the endpoint's error rather than tallying a partial result", async () => {
     const fetchPage = async () => ({ ok: false, body: { error: "Results are not available" } });
     await expect(loadAllBallotItems("e-1", fetchPage)).rejects.toThrow(/Results are not available/);
+  });
+});
+
+describe("searchableFields", () => {
+  it("matches on the office and term, which is how a past election is found", () => {
+    const fields = searchableFields({ title: "Annual election", office: "Treasurer", term_label: "2025-26" });
+    expect(fields).toContain("Treasurer");
+    expect(fields).toContain("2025-26");
   });
 });

@@ -224,3 +224,12 @@ export async function loadAllBallotItems(electionId, fetchPage, pageSize = BALLO
   }
   return { items, ballotCount };
 }
+
+/**
+ * Fields the in-app search matches against (see hub-sdk `searchMatch`).
+ * The office and term label are what an election is looked up by —
+ * "who stood for treasurer in 2025" is the office plus the term.
+ */
+export function searchableFields(item) {
+  return [item.title, item.office, item.term_label];
+}

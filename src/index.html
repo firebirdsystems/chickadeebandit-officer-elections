@@ -308,6 +308,13 @@
       border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; margin-bottom: 12px;
     }
     .deadline-note { font-size: 0.75rem; color: var(--amber); font-weight: 500; }
+    .search-row { margin-bottom: 12px; }
+    .search-input {
+      width: 100%; border: 1.5px solid var(--border-mid, var(--border, #d1d5db));
+      border-radius: 8px; padding: 9px 11px; font: inherit;
+      background: var(--surface, var(--card, #fff)); color: var(--text, inherit);
+    }
+    .search-input:focus { outline: none; border-color: var(--accent, #6366f1); }
   </style>
 <base href="/run/officer-elections/">
 </head>
@@ -317,12 +324,12 @@
 </div>
 
 <script type="module">
-import { memberColor, initial, esc, isAdult } from "/hub-sdk.js";
+import { memberColor, initial, esc, isAdult, searchMatch } from "/hub-sdk.js";
 import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
   canManageElections as _canManageElections,
-  loadAllBallotItems,
+  loadAllBallotItems, searchableFields,
 } from "./logic.js";
 
 // ─── Runtime globals ──────────────────────────────────────────────────────────
@@ -341,6 +348,7 @@ let settings          = { officials_group_id: "" };
 let elections         = [];
 let currentElectionId = null;
 let listTab           = "active"; // "active" | "completed"
+let searchQ = "";       // in-app search (see logic.js searchableFields)
 let showSettings      = false;    // settings view toggle (admin-only)
 
 // Loaded per-election when detail view opens
@@ -1033,12 +1041,21 @@ window.saveOfficialsGroup = async function(groupId) {
   }
 };
 
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "search") return;
+  searchQ = e.target.value;
+  renderList();
+});
+
 function renderList() {
   // Compute phase once per election — avoid 3× calls per card (filter×2 + render)
   const withPhase  = elections.map(e => ({ election: e, phase: electionPhase(e) }));
   const active     = withPhase.filter(x => x.phase !== "certified");
   const completed  = withPhase.filter(x => x.phase === "certified");
-  const showing    = listTab === "active" ? active : completed;
+  const scoped     = listTab === "active" ? active : completed;
+  const showing    = searchQ
+    ? scoped.filter(x => searchMatch(searchQ, searchableFields(x.election)))
+    : scoped;
 
   const canManage = canManageElections();
   const header = `
@@ -1062,15 +1079,22 @@ function renderList() {
     </div>
   `;
 
+  const searchRow = elections.length ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search elections…" aria-label="Search elections" value="${esc(searchQ)}" /></div>` : "";
+
   const list = showing.length === 0
     ? `<div class="empty">
-        <div class="empty-icon">${listTab === "active" ? "🗳️" : "📋"}</div>
-        <p>${listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
+        <div class="empty-icon">${searchQ ? "🔍" : listTab === "active" ? "🗳️" : "📋"}</div>
+        <p>${searchQ ? `No elections match "${esc(searchQ)}".` : listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
         ${listTab === "active" && canManage ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
        </div>`
     : showing.map(({ election, phase }) => renderElectionCard(election, phase)).join("");
 
-  document.getElementById("root").innerHTML = header + list;
+  document.getElementById("root").innerHTML = header + searchRow + list;
+  // renderList rewrites the view, so put the caret back after typing.
+  if (searchQ) {
+    const box = document.getElementById("search");
+    if (box) { box.focus(); box.setSelectionRange(searchQ.length, searchQ.length); }
+  }
 }
 
 function renderElectionCard(election, phase) {
