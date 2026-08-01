@@ -81,6 +81,11 @@
     "candidate_session_column": "election_id",
     "candidate_id_column": "id"
   },
+  "notification_acls": {
+    "send": {
+      "require_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
+    }
+  },
   "admin_config": {
     "settings_table": "settings",
     "keys": ["officials_group_id"]
