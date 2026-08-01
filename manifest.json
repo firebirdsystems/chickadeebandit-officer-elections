@@ -85,6 +85,18 @@
     "settings_table": "settings",
     "keys": ["officials_group_id"]
   },
+  "member_references": {
+    "oe_elections": [
+      { "column": "created_by", "on_removed": "keep" },
+      { "column": "certified_by", "on_removed": "keep" }
+    ],
+    "oe_candidates": [
+      { "column": "member_id", "on_removed": "keep" },
+      { "column": "nominated_by", "on_removed": "keep" }
+    ],
+    "oe_ballot_receipts": { "column": "voter_id", "on_removed": "keep" }
+  },
+  "resource_limits": { "max_db_bytes": 52428800 },
   "nav": { "label": "Elections" },
   "icon": "🗳️"
 }

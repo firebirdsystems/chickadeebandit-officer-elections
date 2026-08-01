@@ -465,7 +465,7 @@ async function loadElections() {
   }
   try {
     const res = await db(
-      `SELECT * FROM app_officer_elections__oe_elections ORDER BY created_at DESC`
+      `SELECT * FROM app_officer_elections__oe_elections ORDER BY created_at DESC LIMIT 200`
     );
     elections = res.rows ?? [];
   } catch { elections = []; }
@@ -518,7 +518,7 @@ async function loadDetailData(electionId) {
 
   try {
     const [candRes, hasVotedRes] = await Promise.all([
-      db(`SELECT * FROM app_officer_elections__oe_candidates WHERE election_id = ? ORDER BY created_at`, [electionId]),
+      db(`SELECT * FROM app_officer_elections__oe_candidates WHERE election_id = ? ORDER BY created_at LIMIT 200`, [electionId]),
       ME ? db(`SELECT voter_id FROM app_officer_elections__oe_ballot_receipts WHERE election_id = ? AND voter_id = ? LIMIT 1`, [electionId, ME.id]) : Promise.resolve({ rows: [] }),
     ]);
     detailCandidates  = candRes.rows ?? [];
