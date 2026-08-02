@@ -17,6 +17,15 @@
     "requires_approval": false
   },
   "storage": "db",
+  "db_plaintext_columns": ["voting_deadline", "nominations_deadline"],
+  "agenda": {
+    "kind": "event",
+    "label": "Elections",
+    "source": {
+      "kind": "sql",
+      "query": "SELECT id AS id, title AS title, office AS subtitle, CASE WHEN status = 'nominations' THEN nominations_deadline ELSE voting_deadline END AS when_at FROM app_officer_elections__oe_elections WHERE (status = 'voting' AND substr(voting_deadline, 1, 10) = :today) OR (status = 'nominations' AND substr(nominations_deadline, 1, 10) = :today) LIMIT 10"
+    }
+  },
   "row_policies": {
     "settings": {
       "kind": "app_config"
@@ -83,6 +92,27 @@
   },
   "notification_acls": {
     "send": {
+      "require_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
+    }
+  },
+  "glance": {
+    "source": {
+      "kind": "sql",
+      "query": "SELECT COUNT(*) AS n FROM app_officer_elections__oe_elections e LEFT JOIN app_officer_elections__oe_ballot_receipts r ON r.election_id = e.id WHERE e.status = 'voting' AND r.voter_id IS NULL LIMIT 1"
+    },
+    "display": {
+      "template": "badge",
+      "count": "n",
+      "label": "ballots waiting for you",
+      "severity": "warn"
+    }
+  },
+  "publishes": ["election.voting_opened", "election.certified"],
+  "publish_acls": {
+    "election.voting_opened": {
+      "require_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
+    },
+    "election.certified": {
       "require_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
     }
   },

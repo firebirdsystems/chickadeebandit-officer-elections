@@ -340,6 +340,23 @@ const BALLOT_RESULTS = window.__BALLOT_RESULTS_URL ?? "";
 const ME       = window.__CURRENT_MEMBER ?? null;
 const IS_ADMIN = window.__IS_ADMIN ?? false;
 const ADMIN_CONFIG = window.__ADMIN_CONFIG_URL ?? "";
+const EVENTS   = window.__EVENTS_URL ?? "";
+
+// Best-effort publish onto the household event bus. Only the two governance
+// transitions are published (voting opens, results certified) — nominations and
+// ballots are not, and no ballot content ever leaves this app.
+async function publishEvent(type, subjectId, payload = {}) {
+  if (!EVENTS) return;
+  try {
+    await fetch(EVENTS, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, subject_id: subjectId, payload }),
+    });
+  } catch {
+    // The status change is already written; a failed publish is not fatal.
+  }
+}
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let members           = [];
@@ -624,6 +641,10 @@ async function advanceToVoting(electionId) {
         metadata: { deepLink: { appId: APP_ID, params: { electionId } } },
       }),
     }).catch(() => {}),
+    publishEvent("election.voting_opened", electionId, {
+      office: election?.office ?? "",
+      voting_method: election?.voting_method ?? "majority",
+    }),
   ]);
   render();
 }
@@ -695,6 +716,12 @@ async function certifyResults(electionId) {
         metadata: { deepLink: { appId: APP_ID, params: { electionId } } },
       }),
     }).catch(() => {}),
+    // Certification is the moment the result becomes official and readable by
+    // everyone, so the winner's member id is safe to carry.
+    publishEvent("election.certified", electionId, {
+      office: election?.office ?? "",
+      winner_member_id: winMember?.id ?? null,
+    }),
   ]);
   render();
 }
