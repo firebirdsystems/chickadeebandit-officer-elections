@@ -17,6 +17,10 @@
     "requires_approval": false
   },
   "storage": "db",
+  "preload": {
+    "settings": {"sql": "SELECT value AS officials_group_id FROM app_officer_elections__settings WHERE key = 'officials_group_id' LIMIT 1"},
+    "oe_elections": {"sql": "SELECT * FROM app_officer_elections__oe_elections ORDER BY created_at DESC LIMIT 200"}
+  },
   "db_plaintext_columns": ["voting_deadline", "nominations_deadline"],
   "agenda": {
     "kind": "event",
