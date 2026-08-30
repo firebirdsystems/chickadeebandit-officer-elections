@@ -324,7 +324,7 @@
 </div>
 
 <script type="module">
-import { memberColor, initial, esc, isAdult, searchMatch } from "/hub-sdk.js";
+import { memberColor, initial, esc, isAdult, searchMatch, logHubActivity } from "/hub-sdk.js";
 import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
@@ -595,17 +595,20 @@ async function createElection(data) {
   await Promise.all([
     loadElections().then(rebuildElectionsMap),
     notify(`New election: ${data.office}`, `A new officer election has been created for ${data.office}. ${data.hasNominations ? "Nominations are now open." : "Voting is now open."}`),
-    // No activity-feed write here or at the two sibling sites below. Those POSTs
-    // used "election_created" / "election_voting_opened" / "election_certified",
-    // none of which are among the hub's own ActivityType values a caller may
-    // write (CALLER_ALLOWED_ACTIVITY_TYPES), so the hub refused every one with a
-    // 403 and no household ever saw an entry — a fetch does not reject on 4xx,
-    // so the .catch() hid it.
+    // Logged HERE and nowhere else in this app: election.voting_opened and
+    // election.certified already carry those two moments, but the manifest
+    // declares no event for an election being CREATED, so without this the
+    // transient push above is its only notice.
     //
-    // Nothing replaces it at THIS site: election.voting_opened and
-    // election.certified carry those two moments on the bus, but the manifest
-    // declares no event for an election being created, so the push above is the
-    // only notice of it. Adding one is a catalog decision, not a cleanup.
+    // Safe to put in a household-wide feed: `visibility` on oe_elections is
+    // `TEXT NOT NULL DEFAULT 'everyone'` and no path in this app writes any
+    // other value, so every election is readable by the whole household. If a
+    // private/limited-visibility election is ever added, this call has to move
+    // behind that check — the activity feed honours no app row policy.
+    logHubActivity(
+      `${ME?.name ?? "Someone"} created an election for ${data.office}`,
+      { deepLink: { appId: APP_ID, params: { election: id } } },
+    ),
   ]);
   closeModal();
   currentElectionId = id;
