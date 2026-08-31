@@ -1078,7 +1078,7 @@ function renderList() {
         <h1>🗳️ Officer Elections</h1>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${canManage ? `<button class="btn btn-primary btn-sm" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
+        ${canManage ? `<button class="btn btn-primary btn-sm" data-testid="new-election" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
         ${IS_ADMIN ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials">⚙️</button>` : ""}
       </div>
     </div>
@@ -1119,7 +1119,7 @@ function renderElectionCard(election, phase) {
   const dl = deadlineLabel(deadline);
   const vmLabel = election.voting_method === "ranked_choice" ? "Ranked-Choice" : "Majority";
   return `
-    <div class="election-card" onclick="openElection('${esc(election.id)}')">
+    <div class="election-card" data-testid="election-card" data-election-id="${esc(election.id)}" onclick="openElection('${esc(election.id)}')">
       <div class="election-card-inner">
         <div class="election-title">${esc(election.title)}</div>
         <div class="election-office">${esc(election.office)}${election.term_label ? ` · ${esc(election.term_label)}` : ""}</div>
@@ -1189,7 +1189,7 @@ function renderNominationsBody(election) {
   // (server-enforced). Show the control only to officials so non-officials don't
   // hit a silent 403 — and the certify/advance lifecycle stays officials-only too.
   const adminStrip = canManageElections() ? `
-    <div class="admin-strip">
+    <div class="admin-strip" data-testid="nomination-admin">
       <button class="btn btn-primary btn-sm" onclick="openNominateModal('${esc(election.id)}')">+ Nominate</button>
       ${detailCandidates.length >= 2
         ? `<button class="btn btn-ghost btn-sm" onclick="advanceToVoting('${esc(election.id)}')">Open Voting →</button>`
@@ -1199,7 +1199,7 @@ function renderNominationsBody(election) {
   ` : "";
 
   return `
-    <div class="section-title" style="margin-top:4px">Candidates (${detailCandidates.length})</div>
+    <div class="section-title" data-testid="candidates-section" data-election-id="${esc(election.id)}" style="margin-top:4px">Candidates (${detailCandidates.length})</div>
     <div class="card" style="overflow:hidden">
       ${candidateHtml}
       ${adminStrip}

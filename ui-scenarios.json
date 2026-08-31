@@ -1,0 +1,114 @@
+{
+  "scenarios": [
+    {
+      "name": "nomination and election-creation controls follow the configured officials group",
+      "members": {
+        "viewer": "adult",
+        "other": "adult"
+      },
+      "steps": [
+        {
+          "action": "seedGroup",
+          "group": "social",
+          "name": "Social Committee",
+          "members": [
+            "other"
+          ]
+        },
+        {
+          "action": "seedGroup",
+          "group": "officials",
+          "name": "Election Officials",
+          "members": [
+            "viewer"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__settings (key, value) VALUES ('officials_group_id', ?)",
+          "params": [
+            "{{group:social}}"
+          ]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, 'majority', 1, date('now','+10 days'), date('now','+20 days'), 'nominations', ?, ?, datetime('now'), 'everyone')",
+          "params": [
+            "ui-election",
+            "2026 board election",
+            "Treasurer",
+            "2026-2028",
+            "{{other}}"
+          ]
+        },
+        {
+          "action": "open",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"election-card\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"new-election\"]",
+          "count": 0
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"election-card\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"candidates-section\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectCount",
+          "as": "viewer",
+          "selector": "[data-testid=\"nomination-admin\"]",
+          "count": 0
+        },
+        {
+          "action": "seedRaw",
+          "sql": "UPDATE app_officer_elections__settings SET value = ? WHERE key = 'officials_group_id'",
+          "params": [
+            "{{group:officials}}"
+          ]
+        },
+        {
+          "action": "reload",
+          "as": "viewer"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"election-card\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"new-election\"]"
+        },
+        {
+          "action": "click",
+          "as": "viewer",
+          "selector": "[data-testid=\"election-card\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"candidates-section\"][data-election-id=\"ui-election\"]"
+        },
+        {
+          "action": "expectVisible",
+          "as": "viewer",
+          "selector": "[data-testid=\"nomination-admin\"]"
+        }
+      ]
+    }
+  ]
+}
