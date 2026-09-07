@@ -324,12 +324,13 @@
 </div>
 
 <script type="module">
-import { memberColor, initial, esc, isAdult, searchMatch, logHubActivity } from "/hub-sdk.js";
+import { memberColor, initial, esc, searchMatch, logHubActivity } from "/hub-sdk.js";
 import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
   canManageElections as _canManageElections,
   loadAllBallotItems, searchableFields,
+  deadlineCalendarDate, votingReviewTitle, votingReviewSummary,
 } from "./logic.js";
 
 // ─── Runtime globals ──────────────────────────────────────────────────────────
@@ -631,16 +632,48 @@ async function nominateCandidate(electionId, memberId, statement) {
   render();
 }
 
+/**
+ * Announce that voting opened, carrying the closing date so a rule can put it
+ * on the org calendar. A deadline nobody sees is a deadline people miss.
+ *
+ * Guarded on a usable date, and the guard covers the WHOLE publish rather than
+ * just the date fields. `election.voting_opened` is the calendar-bearing event
+ * — there is no second event carrying this transition — and the calendar's
+ * `create_event` requires `event_date`, which an ABSENT payload field fails on
+ * exactly as an empty one does (`missing required param`). So omitting the
+ * fields would buy nothing but a guaranteed-failing automation run against a
+ * per-day rate limit. Opening voting still works and still notifies: the push
+ * above is a separate call and is not gated by this at all.
+ *
+ * In practice unreachable — `voting_deadline` is NOT NULL and the create form
+ * refuses a blank one — which is the point: it stays defensive, not a branch
+ * the household can walk into.
+ */
+async function announceVotingDeadline(electionId, election) {
+  const eventDate = deadlineCalendarDate(election?.voting_deadline);
+  if (!eventDate) return;
+  await publishEvent("election.voting_opened", electionId, {
+    // Steady identity for the calendar entry this becomes, so `election.certified`
+    // can take that same entry back down. The event id is fresh on every publish,
+    // so it can only say "this is a fresh event", never "this is the election that
+    // already has an entry". Namespaced by app because the key shares a column
+    // with every other publisher's.
+    source_ref_id: `officer-elections:${electionId}`,
+    office: election?.office ?? "",
+    voting_method: election?.voting_method ?? "majority",
+    voting_deadline: eventDate,
+    review_title: votingReviewTitle(election),
+    summary: votingReviewSummary(election),
+  });
+}
+
 async function advanceToVoting(electionId) {
   await db(`UPDATE app_officer_elections__oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
   const election = electionsMap.get(electionId);
   if (election) election.status = "voting";
   await Promise.all([
     notify("Voting is now open", `Voting has opened for ${election?.office ?? "an officer position"}. Cast your ballot!`),
-    publishEvent("election.voting_opened", electionId, {
-      office: election?.office ?? "",
-      voting_method: election?.voting_method ?? "majority",
-    }),
+    announceVotingDeadline(electionId, election),
   ]);
   render();
 }
@@ -706,6 +739,12 @@ async function certifyResults(electionId) {
     // Certification is the moment the result becomes official and readable by
     // everyone, so the winner's member id is safe to carry.
     publishEvent("election.certified", electionId, {
+      // The SAME source_ref_id `election.voting_opened` announced with: this is
+      // the retraction for the entry that event created. Once the result is
+      // certified the closing date is spent, and an entry that stays up reads
+      // as a deadline the household still has to meet. A mismatch here would
+      // silently retract nothing, so the two strings must be built the same way.
+      source_ref_id: `officer-elections:${electionId}`,
       office: election?.office ?? "",
       winner_member_id: winMember?.id ?? null,
     }),

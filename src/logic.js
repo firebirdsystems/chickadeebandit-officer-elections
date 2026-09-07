@@ -233,3 +233,50 @@ export async function loadAllBallotItems(electionId, fetchPage, pageSize = BALLO
 export function searchableFields(item) {
   return [item.title, item.office, item.term_label];
 }
+
+/**
+ * Project a stored deadline onto the bare `yyyy-mm-dd` the calendar's
+ * `create_event` takes, or "" when there is nothing usable to project.
+ *
+ * Deadlines are written from a `datetime-local` input, so they arrive as
+ * `YYYY-MM-DDTHH:MM` — household-LOCAL, never UTC (see 004_deadlines_plaintext).
+ * Re-parsing one through `new Date()` to reformat it would drag it through the
+ * device's zone and can land the entry a day either side of the deadline, so the
+ * date part is taken as text and never re-interpreted. Already-date-only values
+ * pass straight through: older rows and any hand-written deadline are stored that
+ * way, and both shapes have to reach the calendar as the same day.
+ *
+ * "" rather than null because the caller treats it as "there is no calendar
+ * entry to make" — and an empty `event_date` is exactly what fails an automation
+ * run with `missing required param`, which is what the guard exists to prevent.
+ */
+export function deadlineCalendarDate(deadline) {
+  const m = /^(\d{4}-\d{2}-\d{2})(?:[T ]|$)/.exec(String(deadline ?? "").trim());
+  return m ? m[1] : "";
+}
+
+/** How a voting method reads in prose the household did not choose from a radio. */
+function votingMethodLabel(method) {
+  return method === "ranked_choice" ? "ranked-choice (IRV)" : "majority";
+}
+
+/**
+ * Title of the calendar entry an opened election puts on the org calendar.
+ * Names the office, because a calendar full of "Voting closes" says nothing
+ * about which seat is being filled.
+ */
+export function votingReviewTitle(election) {
+  const office = String(election?.office ?? "").trim();
+  return office ? `${office} — voting closes` : "Officer election — voting closes";
+}
+
+/**
+ * Second line of that entry: which method decides it, so a member reading the
+ * calendar knows whether they are picking one name or ranking a list before
+ * they open the app. Deliberately carries no candidate names — the entry rides
+ * the household ICS feed out to Google/Apple, and who stood for office is not
+ * something to hand an external calendar service.
+ */
+export function votingReviewSummary(election) {
+  return `Ballots close for ${String(election?.office ?? "this office").trim() || "this office"} · ${votingMethodLabel(election?.voting_method)} vote`;
+}

@@ -64,3 +64,48 @@ describe("ballot security", () => {
     });
   });
 });
+
+describe("suggested calendar automations", () => {
+  const suggestions = manifest.suggested_automations ?? [];
+
+  it("ships both halves of the calendar rule", () => {
+    expect(suggestions.map(s => s.action_id)).toEqual(
+      expect.arrayContaining(["create_event", "retract_dated_event"]),
+    );
+  });
+
+  it("maps every required param of the calendar's create_event", () => {
+    // `title` and `event_date` are required by calendar.automation_actions.create_event,
+    // and a run missing either fails with `missing required param`.
+    const create = suggestions.find(s => s.target_app_id === "calendar" && s.action_id === "create_event");
+    expect(create.param_map.title?.value).toBe("review_title");
+    expect(create.param_map.event_date?.value).toBe("voting_deadline");
+    expect(create.param_map.source_ref_id?.value).toBe("source_ref_id");
+  });
+
+  it("retracts with the same source_ref_id the announcement carries", () => {
+    // The retraction is scoped by source_ref_id alone; a mismatch takes nothing
+    // down and leaves a spent deadline standing on the household's calendar.
+    const retract = suggestions.find(s => s.action_id === "retract_dated_event");
+    expect(retract.trigger_event).toBe("election.certified");
+    expect(retract.param_map).toEqual({ source_ref_id: { kind: "payload_field", value: "source_ref_id" } });
+  });
+
+  it("triggers only on events this app declares", () => {
+    // The hub only offers a suggestion whose trigger has an installed publisher,
+    // so a trigger missing from `publishes` is a suggestion nobody is ever shown.
+    for (const s of suggestions) {
+      expect(manifest.publishes, `untriggerable: ${s.trigger_event}`).toContain(s.trigger_event);
+    }
+  });
+
+  it("leaves both trigger events behind the officials-group gate", () => {
+    // The added payload fields do not widen who may publish: these two events
+    // are gated on the configured election officials group, not on an adult role.
+    for (const s of suggestions) {
+      expect(manifest.publish_acls[s.trigger_event]).toEqual({
+        require_group_setting: { settings_table: "settings", settings_key: "officials_group_id" },
+      });
+    }
+  });
+});

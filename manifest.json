@@ -120,6 +120,31 @@
       "require_group_setting": { "settings_table": "settings", "settings_key": "officials_group_id" }
     }
   },
+  "suggested_automations": [
+    {
+      "title": "Put the voting deadline on the calendar",
+      "description": "When voting opens on an election, put the day ballots close on the org calendar, named for the office. A deadline that lives only inside this app is a deadline people miss — the calendar is where the household already looks, and it rides out to whatever calendar members have subscribed. Only elections with a closing date set announce one.",
+      "trigger_event": "election.voting_opened",
+      "target_app_id": "calendar",
+      "action_id": "create_event",
+      "param_map": {
+        "title": { "kind": "payload_field", "value": "review_title" },
+        "event_date": { "kind": "payload_field", "value": "voting_deadline" },
+        "description": { "kind": "payload_field", "value": "summary" },
+        "source_ref_id": { "kind": "payload_field", "value": "source_ref_id" }
+      }
+    },
+    {
+      "title": "Take the voting deadline back off the calendar",
+      "description": "The other half of the rule above, and it does nothing on its own. Once results are certified the closing date is spent, so the entry that rule put on the calendar stops showing instead of standing there as a deadline the household still has to meet. Add both, or every finished election leaves its deadline behind.",
+      "trigger_event": "election.certified",
+      "target_app_id": "calendar",
+      "action_id": "retract_dated_event",
+      "param_map": {
+        "source_ref_id": { "kind": "payload_field", "value": "source_ref_id" }
+      }
+    }
+  ],
   "admin_config": {
     "settings_table": "settings",
     "keys": ["officials_group_id"]

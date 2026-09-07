@@ -8,6 +8,7 @@ import {
   winnerId,
   canManageElections,
   loadAllBallotItems, searchableFields,
+  deadlineCalendarDate, votingReviewTitle, votingReviewSummary,
 } from "../src/logic.js";
 import { testPrivilegedGateContract } from "./helpers/privileged-gate.mjs";
 
@@ -309,5 +310,63 @@ describe("searchableFields", () => {
     const fields = searchableFields({ title: "Annual election", office: "Treasurer", term_label: "2025-26" });
     expect(fields).toContain("Treasurer");
     expect(fields).toContain("2025-26");
+  });
+});
+
+// ── Calendar announcement helpers ─────────────────────────────────────────────
+// These decide what `election.voting_opened` carries for the calendar rule, so
+// the blank case is the one that matters: an empty `event_date` fails the
+// automation run with `missing required param`.
+
+describe("deadlineCalendarDate", () => {
+  it("takes the date part off a datetime-local deadline", () => {
+    expect(deadlineCalendarDate("2026-11-04T17:30")).toBe("2026-11-04");
+  });
+
+  it("passes an already-date-only deadline straight through", () => {
+    expect(deadlineCalendarDate("2026-11-04")).toBe("2026-11-04");
+  });
+
+  it("never re-interprets the value through a timezone", () => {
+    // A deadline is household-LOCAL. Parsing "2026-01-01T00:30" with `new Date`
+    // and reformatting it would land 2025-12-31 west of UTC, putting the entry
+    // on the wrong day for half the households that use it.
+    expect(deadlineCalendarDate("2026-01-01T00:30")).toBe("2026-01-01");
+    expect(deadlineCalendarDate("2026-12-31T23:59")).toBe("2026-12-31");
+  });
+
+  it("returns \"\" for a blank or unusable deadline, which is the publish guard", () => {
+    for (const bad of ["", "   ", null, undefined, "soon", "11/04/2026", "2026-11"]) {
+      expect(deadlineCalendarDate(bad)).toBe("");
+    }
+  });
+
+  it("tolerates a space-separated datetime and surrounding whitespace", () => {
+    expect(deadlineCalendarDate(" 2026-11-04 17:30 ")).toBe("2026-11-04");
+  });
+});
+
+describe("votingReviewTitle", () => {
+  it("names the office, so a calendar of deadlines says which seat", () => {
+    expect(votingReviewTitle({ office: "Treasurer" })).toBe("Treasurer — voting closes");
+  });
+
+  it("falls back rather than titling an entry with a dangling dash", () => {
+    expect(votingReviewTitle({ office: "   " })).toBe("Officer election — voting closes");
+    expect(votingReviewTitle({})).toBe("Officer election — voting closes");
+  });
+});
+
+describe("votingReviewSummary", () => {
+  it("names the voting method so a member knows what the ballot asks of them", () => {
+    expect(votingReviewSummary({ office: "Treasurer", voting_method: "ranked_choice" }))
+      .toBe("Ballots close for Treasurer · ranked-choice (IRV) vote");
+    expect(votingReviewSummary({ office: "President", voting_method: "majority" }))
+      .toBe("Ballots close for President · majority vote");
+  });
+
+  it("carries no candidate names — the entry leaves via the household ICS feed", () => {
+    const summary = votingReviewSummary({ office: "Secretary", voting_method: "majority" });
+    expect(summary).not.toMatch(/candidate/i);
   });
 });
