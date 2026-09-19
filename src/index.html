@@ -16,16 +16,16 @@
       --muted:         var(--hub-text-muted, #6b7280);
       --accent:        var(--hub-primary, #111827);
       --accent-hover:  var(--hub-primary-hover, #374151);
-      --accent-light:  #f3f4f6;
-      --accent-lighter:#f9fafb;
-      --green: #059669;
-      --green-light: #d1fae5;
-      --red: #dc2626;
-      --red-light: #fee2e2;
-      --amber: #d97706;
-      --amber-light: #fef3c7;
-      --blue: #2563eb;
-      --blue-light: #dbeafe;
+      --accent-light:  var(--bg);
+      --accent-lighter:var(--bg);
+      --green: var(--hub-tint-success-fg, #059669);
+      --green-light: var(--hub-tint-success, #d1fae5);
+      --red: var(--hub-tint-danger-fg, #dc2626);
+      --red-light: var(--hub-tint-danger, #fee2e2);
+      --amber: var(--hub-tint-warning-fg, #d97706);
+      --amber-light: var(--hub-tint-warning, #fef3c7);
+      --blue: var(--hub-tint-info-fg, #2563eb);
+      --blue-light: var(--hub-tint-info, #dbeafe);
       --radius: var(--hub-radius, 0.5rem);
       --shadow: 0 1px 3px rgba(0,0,0,.07);
       --shadow-md: 0 4px 12px rgba(0,0,0,.1);
@@ -100,7 +100,7 @@
     .badge-nominations  { background: var(--blue-light);  color: var(--blue); }
     .badge-voting       { background: var(--green-light); color: var(--green); }
     .badge-closed       { background: var(--amber-light); color: var(--amber); }
-    .badge-certified    { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .badge-certified    { background: var(--hub-tint-success, #f0fdf4); color: var(--green); border: 1px solid var(--hub-tint-success-border, #bbf7d0); }
     .badge-majority     { background: var(--accent-light); color: var(--muted); }
     .badge-rc           { background: var(--accent-light); color: var(--muted); }
 
@@ -114,7 +114,7 @@
       cursor: pointer; font-size: 0.85rem; font-weight: 600;
       color: var(--muted); background: transparent; transition: all .15s;
     }
-    .tab.active { background: white; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .tab.active { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 
     /* ── Election list cards ─────────────────────────────── */
     .election-card {
@@ -153,7 +153,7 @@
     .phase-banner.nominations { background: var(--blue-light); color: var(--blue); }
     .phase-banner.voting      { background: var(--green-light); color: var(--green); }
     .phase-banner.closed      { background: var(--amber-light); color: var(--amber); }
-    .phase-banner.certified   { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+    .phase-banner.certified   { background: var(--hub-tint-success, #f0fdf4); color: var(--green); border: 1px solid var(--hub-tint-success-border, #bbf7d0); }
     .phase-banner.voted       { background: var(--green-light); color: var(--green); }
 
     /* ── Candidate cards ─────────────────────────────────── */
@@ -208,7 +208,7 @@
     .rank-option:last-child { border-bottom: none; }
     .rank-badge {
       width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
-      color: white; font-weight: 700; font-size: 0.8rem;
+      color: var(--hub-primary-fg, white); font-weight: 700; font-size: 0.8rem;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .rank-badge.unranked { background: var(--border); color: var(--muted); }
