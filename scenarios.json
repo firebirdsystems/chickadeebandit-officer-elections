@@ -17,6 +17,187 @@
           "expect": { "status": 403 }
         }
       ]
+    },
+    {
+      "name": "a child can read a published election but cannot create, edit or certify elections or nominate candidates",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_deadline, status, created_by, created_at, visibility) VALUES ('el-1', 'Board 2099', 'President', '2099-06-01T00:00:00Z', 'voting', ?, '2099-01-01T00:00:00Z', 'everyone')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id, status FROM app_officer_elections__oe_elections",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "el-1", "status": "voting" }] }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_deadline, status, created_by, created_at) VALUES ('el-kid', 'Kid election', 'Treasurer', '2099-06-01T00:00:00Z', 'nominations', ?, '2099-01-01T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "UPDATE app_officer_elections__oe_elections SET status = 'certified', certified_by = ? WHERE id = 'el-1'",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at) VALUES ('cand-kid', 'el-1', ?, 'vote me', ?, '2099-01-02T00:00:00Z')",
+          "params": ["{{kid}}", "{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id, status FROM app_officer_elections__oe_elections WHERE id = 'el-1'",
+          "expect": { "status": 200, "rowsContain": [{ "id": "el-1", "status": "voting" }] }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT id FROM app_officer_elections__oe_candidates",
+          "expect": { "status": 200, "rowCount": 0 }
+        }
+      ]
+    },
+    {
+      "name": "a child cannot read ballots or forge a ballot receipt, and sees only their own receipt",
+      "members": { "kid": "child", "parent": "adult" },
+      "steps": [
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES ('el-1', ?, '2099-01-02T00:00:00Z')",
+          "params": ["{{parent}}"]
+        },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES ('el-1', ?, '2099-01-02T00:00:00Z')",
+          "params": ["{{kid}}"]
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT id FROM app_officer_elections__oe_ballots",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES ('el-2', ?, '2099-01-03T00:00:00Z')",
+          "params": ["{{kid}}"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "kid",
+          "sql": "SELECT election_id, voter_id FROM app_officer_elections__oe_ballot_receipts",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "voter_id": "scn-kid" }] }
+        },
+        {
+          "action": "db",
+          "as": "parent",
+          "sql": "SELECT election_id, voter_id FROM app_officer_elections__oe_ballot_receipts",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "voter_id": "scn-parent" }] }
+        }
+      ]
+    },
+    {
+      "name": "an officials-group member creates, edits and staffs an election; a plain adult outside the group is refused every write",
+      "members": { "official": "adult", "member": "adult" },
+      "steps": [
+        { "action": "seedGroup", "group": "officials", "name": "Election officials", "members": ["official"] },
+        {
+          "action": "seedRaw",
+          "sql": "INSERT INTO app_officer_elections__settings (key, value) VALUES ('officials_group_id', ?)",
+          "params": ["{{group:officials}}"]
+        },
+        {
+          "action": "db",
+          "as": "official",
+          "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_deadline, status, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, 'everyone')",
+          "params": [
+            "el-1",
+            "Board election",
+            "President",
+            "2099-03-01T18:00",
+            "nominations",
+            "{{official}}",
+            "2099-01-01T00:00:00Z"
+          ],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "official",
+          "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, 'everyone')",
+          "params": ["cand-1", "el-1", "{{member}}", "{{official}}", "2099-01-02T00:00:00Z"],
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "official",
+          "sql": "UPDATE app_officer_elections__oe_elections SET title = 'Annual board election' WHERE id = 'el-1'",
+          "expect": { "status": 200 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_deadline, status, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, 'everyone')",
+          "params": [
+            "el-2",
+            "Rogue election",
+            "Treasurer",
+            "2099-03-01T18:00",
+            "nominations",
+            "{{member}}",
+            "2099-01-01T00:00:00Z"
+          ],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, 'everyone')",
+          "params": ["cand-2", "el-1", "{{official}}", "{{member}}", "2099-01-02T00:00:00Z"],
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "UPDATE app_officer_elections__oe_elections SET title = 'Hijacked' WHERE id = 'el-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "DELETE FROM app_officer_elections__oe_candidates WHERE id = 'cand-1'",
+          "expect": { "status": 403 }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "SELECT id, title FROM app_officer_elections__oe_elections",
+          "expect": {
+            "status": 200,
+            "rowCount": 1,
+            "rowsContain": [{ "id": "el-1", "title": "Annual board election" }]
+          }
+        },
+        {
+          "action": "db",
+          "as": "member",
+          "sql": "SELECT id, member_id FROM app_officer_elections__oe_candidates",
+          "expect": { "status": 200, "rowCount": 1, "rowsContain": [{ "id": "cand-1", "member_id": "scn-member" }] }
+        }
+      ]
     }
   ]
 }
