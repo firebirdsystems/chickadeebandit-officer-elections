@@ -10,6 +10,7 @@
     "dev": "node dev.mjs"
   },
   "devDependencies": {
+    "fast-check": "^4.10.2",
     "vitest": "^3.2.4"
   },
   "license": "MIT"
