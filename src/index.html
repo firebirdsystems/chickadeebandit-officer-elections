@@ -301,7 +301,7 @@
 
     /* ── Misc ────────────────────────────────────────────── */
     .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 0.9rem; }
-    .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .empty-icon { margin-bottom: 10px; }
     .loading { text-align: center; padding: 48px; color: var(--muted); }
     .error-msg {
       background: var(--red-light); color: var(--red);
@@ -324,7 +324,7 @@
 </div>
 
 <script type="module">
-import { memberColor, initial, esc, searchMatch, logHubActivity } from "/hub-sdk.js";
+import { memberColor, initial, esc, searchMatch, logHubActivity, glyph, chickadee } from "/hub-sdk.js";
 import {
   electionPhase, deadlineLabel,
   tallyMajority, tallyRankedChoice, winnerId,
@@ -1018,7 +1018,7 @@ function phaseBadge(phase) {
     nominations: `<span class="badge badge-nominations">Nominations</span>`,
     voting:      `<span class="badge badge-voting">Voting Open</span>`,
     closed:      `<span class="badge badge-closed">Closed</span>`,
-    certified:   `<span class="badge badge-certified">✓ Certified</span>`,
+    certified:   `<span class="badge badge-certified">${glyph("tick", { accent: "currentColor" })} Certified</span>`,
   };
   return map[phase] ?? "";
 }
@@ -1029,7 +1029,7 @@ function renderOfficialsNotice() {
   if (settings.officials_group_id) return "";
   return `
     <div class="phase-banner closed" style="margin-bottom:12px">
-      🔒 No election officials group is set. ${IS_ADMIN
+      ${glyph("lock")} No election officials group is set. ${IS_ADMIN
         ? `<a href="#" onclick="openSettings();return false" style="color:inherit;font-weight:700;text-decoration:underline">Designate one</a> to create and manage elections.`
         : "An administrator must designate one before elections can be created or managed."}
     </div>`;
@@ -1063,7 +1063,7 @@ function renderSettingsView() {
 
   document.getElementById("root").innerHTML = `
     <button class="back-btn" onclick="closeSettings()">← All Elections</button>
-    <div class="page-header"><div><h1>⚙️ Election Settings</h1></div></div>
+    <div class="page-header"><div><h1>${glyph("gear")} Election Settings</h1></div></div>
     ${body}`;
 }
 
@@ -1114,11 +1114,11 @@ function renderList() {
   const header = `
     <div class="page-header">
       <div>
-        <h1>🗳️ Officer Elections</h1>
+        <h1>${glyph("ballot-box")} Officer Elections</h1>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         ${canManage ? `<button class="btn btn-primary btn-sm" data-testid="new-election" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
-        ${IS_ADMIN ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials">⚙️</button>` : ""}
+        ${IS_ADMIN ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials" aria-label="Election officials">${glyph("gear")}</button>` : ""}
       </div>
     </div>
     ${renderOfficialsNotice()}
@@ -1136,7 +1136,7 @@ function renderList() {
 
   const list = showing.length === 0
     ? `<div class="empty">
-        <div class="empty-icon">${searchQ ? "🔍" : listTab === "active" ? "🗳️" : "📋"}</div>
+        <div class="empty-icon">${chickadee(searchQ ? "searching" : "nest")}</div>
         <p>${searchQ ? `No elections match "${esc(searchQ)}".` : listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
         ${listTab === "active" && canManage ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
        </div>`
@@ -1165,7 +1165,7 @@ function renderElectionCard(election, phase) {
         <div class="election-meta">
           ${phaseBadge(phase)}
           <span class="badge ${election.voting_method === "ranked_choice" ? "badge-rc" : "badge-majority"}">${vmLabel}</span>
-          ${dl ? `<span class="deadline-note">⏱ ${esc(dl)}</span>` : ""}
+          ${dl ? `<span class="deadline-note">${glyph("hourglass")} ${esc(dl)}</span>` : ""}
         </div>
       </div>
     </div>
@@ -1180,10 +1180,10 @@ function renderDetail(election) {
 
   // Phase banner
   const bannerText = {
-    nominations: `📋 Nominations open${election.nominations_deadline ? ` · ${deadlineLabel(election.nominations_deadline) ?? ""}` : ""}`,
-    voting:      `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`,
-    closed:      `🔒 Voting closed · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
-    certified:   `✅ Certified by ${esc(certifier?.name ?? "admin")}${election.certified_at ? ` on ${new Date(election.certified_at).toLocaleDateString()}` : ""}`,
+    nominations: `${glyph("checklist")} Nominations open${election.nominations_deadline ? ` · ${deadlineLabel(election.nominations_deadline) ?? ""}` : ""}`,
+    voting:      `${glyph("ballot-box")} Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`,
+    closed:      `${glyph("lock")} Voting closed · ${detailBallotCount} vote${detailBallotCount !== 1 ? "s" : ""} cast`,
+    certified:   `${glyph("check")} Certified by ${esc(certifier?.name ?? "admin")}${election.certified_at ? ` on ${new Date(election.certified_at).toLocaleDateString()}` : ""}`,
   };
   const phaseBannerHtml = `<div class="phase-banner ${phase}" id="phase-banner">${bannerText[phase] ?? ""}</div>`;
 
@@ -1221,7 +1221,7 @@ function renderDetail(election) {
 
 function renderNominationsBody(election) {
   const candidateHtml = detailCandidates.length === 0
-    ? `<div class="empty" style="padding:24px"><div class="empty-icon" style="font-size:2rem">👤</div><p>No candidates nominated yet.</p></div>`
+    ? `<div class="empty" style="padding:24px"><div class="empty-icon">${chickadee("nest", { size: 72 })}</div><p>No candidates nominated yet.</p></div>`
     : detailCandidates.map(c => renderCandidateCard(c)).join("");
 
   // Nominating writes to oe_candidates, which only the officials group may write
@@ -1253,7 +1253,7 @@ function renderVotingBody(election) {
   if (!ME) {
     ballotHtml = `<div class="phase-banner voted">Sign in to cast your ballot.</div>`;
   } else if (detailHasVoted) {
-    ballotHtml = `<div class="phase-banner voted">✓ You've voted. Results will be revealed when voting closes.</div>`;
+    ballotHtml = `<div class="phase-banner voted">${glyph("tick")} You've voted. Results will be revealed when voting closes.</div>`;
   } else {
     const btnLabel = election.voting_method === "ranked_choice" ? "Rank Candidates" : "Cast Ballot";
     const onclick  = election.voting_method === "ranked_choice"
@@ -1269,7 +1269,7 @@ function renderVotingBody(election) {
 
   const adminStrip = canManageElections() ? `
     <div class="admin-strip">
-      <button class="btn btn-ghost btn-sm" onclick="closeVoting('${esc(election.id)}')">🔒 Close Voting</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeVoting('${esc(election.id)}')">${glyph("lock")} Close Voting</button>
     </div>
   ` : "";
 
@@ -1285,7 +1285,7 @@ function renderVotingBody(election) {
 
 function renderResultsBody(election, phase) {
   if (detailCandidates.length === 0) {
-    return `<div class="empty"><div class="empty-icon">📋</div><p>No candidates.</p></div>`;
+    return `<div class="empty"><div class="empty-icon">${chickadee("nest")}</div><p>No candidates.</p></div>`;
   }
 
   let resultsHtml = "";
@@ -1298,7 +1298,7 @@ function renderResultsBody(election, phase) {
     if (winMember) {
       resultsHtml += `
         <div class="phase-banner certified" style="margin-bottom:12px;font-size:0.95rem;font-weight:600">
-          🏆 ${esc(winMember.name)} elected
+          ${glyph("trophy")} ${esc(winMember.name)} elected
         </div>
       `;
     } else if (detailBallotCount > 0) {
@@ -1314,7 +1314,7 @@ function renderResultsBody(election, phase) {
         <div class="candidate-card" style="margin-bottom:0;border-radius:0;border-left:none;border-right:none;border-top:none;box-shadow:none;border-bottom:1px solid var(--border);padding:12px 16px">
           <div class="candidate-top">
             <span class="avatar-sm" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
-            <span class="candidate-name">${esc(m?.name ?? "Unknown")}${isWinner ? " 🏆" : ""}</span>
+            <span class="candidate-name">${esc(m?.name ?? "Unknown")}${isWinner ? ` ${glyph("trophy")}` : ""}</span>
           </div>
         </div>
       `;
@@ -1365,7 +1365,7 @@ function renderResultsBody(election, phase) {
     if (winMember) {
       resultsHtml += `
         <div class="phase-banner certified" style="margin-bottom:12px;font-size:0.95rem;font-weight:600">
-          🏆 ${esc(winMember.name)} elected
+          ${glyph("trophy")} ${esc(winMember.name)} elected
         </div>
       `;
     } else if (detailBallotCount > 0) {
@@ -1385,7 +1385,7 @@ function renderResultsBody(election, phase) {
         <div style="padding:12px 16px;border-bottom:1px solid var(--border)">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
             <span class="avatar-sm" style="background:${memberColor(c.member_id)}">${initial(m?.name ?? "?")}</span>
-            <span style="font-weight:600;font-size:0.95rem">${esc(m?.name ?? "Unknown")}${isWin ? " 🏆" : ""}</span>
+            <span style="font-weight:600;font-size:0.95rem">${esc(m?.name ?? "Unknown")}${isWin ? ` ${glyph("trophy")}` : ""}</span>
             <span style="margin-left:auto;font-size:0.82rem;color:var(--muted)">${v} vote${v !== 1 ? "s" : ""} (${pct}%)</span>
           </div>
           <div class="result-bar-wrap">
@@ -1401,7 +1401,7 @@ function renderResultsBody(election, phase) {
 
   const adminStrip = canManageElections() && phase === "closed" ? `
     <div style="margin-top:16px">
-      <button class="btn btn-success" onclick="certifyResults('${esc(election.id)}')">✓ Certify Results</button>
+      <button class="btn btn-success" onclick="certifyResults('${esc(election.id)}')">${glyph("tick", { accent: "currentColor" })} Certify Results</button>
     </div>
   ` : "";
 
@@ -1435,8 +1435,8 @@ function patchAfterVote() {
   const ballotEl = document.getElementById("ballot-section");
   if (!election || !bannerEl || !ballotEl) { render(); return; }
 
-  bannerEl.innerHTML = `🗳️ Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`;
-  ballotEl.innerHTML = `<div class="phase-banner voted">✓ You've voted. Results will be revealed when voting closes.</div>`;
+  bannerEl.innerHTML = `${glyph("ballot-box")} Voting open${election.voting_deadline ? ` · ${deadlineLabel(election.voting_deadline) ?? ""}` : ""}`;
+  ballotEl.innerHTML = `<div class="phase-banner voted">${glyph("tick")} You've voted. Results will be revealed when voting closes.</div>`;
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
