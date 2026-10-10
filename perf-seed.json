@@ -1,0 +1,1716 @@
+{
+  "groups": [
+    {
+      "key": "officials",
+      "name": "Election Officials",
+      "members": [
+        "{{me}}",
+        "{{adult2}}"
+      ]
+    }
+  ],
+  "seed": [
+    {
+      "sql": "INSERT INTO app_officer_elections__settings (key, value) VALUES (?, ?)",
+      "params": [
+        "officials_group_id",
+        "{{group:officials}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-0 minutes'), ?)",
+      "params": [
+        "perf-election-01",
+        "President - Spring 2027",
+        "President",
+        "majority",
+        1,
+        "{{date:8}}",
+        "{{date:20}}",
+        "nominations",
+        "Spring 2027",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-001",
+        "perf-election-01",
+        "{{partner}}",
+        "Committed to transparency and steady growth.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-002",
+        "perf-election-01",
+        "{{adult2}}",
+        "Strong financial background.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-003",
+        "perf-election-01",
+        "{{me}}",
+        "I'll keep detailed meeting records.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-4 minutes'), ?)",
+      "params": [
+        "perf-election-02",
+        "Vice President - Spring 2027",
+        "Vice President",
+        "ranked_choice",
+        1,
+        "{{date:8}}",
+        "{{date:20}}",
+        "nominations",
+        "Spring 2027",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-004",
+        "perf-election-02",
+        "{{adult2}}",
+        "Organized and detail-oriented.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-005",
+        "perf-election-02",
+        "{{me}}",
+        "Ready to serve.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-8 minutes'), ?)",
+      "params": [
+        "perf-election-03",
+        "Treasurer - Spring 2027",
+        "Treasurer",
+        "majority",
+        1,
+        "{{date:8}}",
+        "{{date:20}}",
+        "nominations",
+        "Spring 2027",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-006",
+        "perf-election-03",
+        "{{me}}",
+        "I want more events for families.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-007",
+        "perf-election-03",
+        "{{partner}}",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-008",
+        "perf-election-03",
+        "{{adult2}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-12 minutes'), ?)",
+      "params": [
+        "perf-election-04",
+        "Secretary - Spring 2027",
+        "Secretary",
+        "majority",
+        1,
+        "{{date:8}}",
+        "{{date:20}}",
+        "nominations",
+        "Spring 2027",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-009",
+        "perf-election-04",
+        "{{partner}}",
+        "Committed to transparency and steady growth.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-010",
+        "perf-election-04",
+        "{{adult2}}",
+        "Strong financial background.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-16 minutes'), ?)",
+      "params": [
+        "perf-election-05",
+        "Events Chair - Spring 2027",
+        "Events Chair",
+        "ranked_choice",
+        1,
+        "{{date:8}}",
+        "{{date:20}}",
+        "nominations",
+        "Spring 2027",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-011",
+        "perf-election-05",
+        "{{adult2}}",
+        "I'll keep detailed meeting records.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-6 days','-20 minutes'), ?)",
+      "params": [
+        "perf-election-06",
+        "Membership Chair - Spring 2027",
+        "Membership Chair",
+        "majority",
+        0,
+        "{{date:20}}",
+        "voting",
+        "Spring 2027",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-012",
+        "perf-election-06",
+        "{{me}}",
+        "Organized and detail-oriented.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-5 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-013",
+        "perf-election-06",
+        "{{partner}}",
+        "Ready to serve.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-0 minutes'), ?)",
+      "params": [
+        "perf-election-07",
+        "President - Fall 2026",
+        "President",
+        "majority",
+        1,
+        "{{date:-30}}",
+        "{{date:3}}",
+        "voting",
+        "Fall 2026",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-014",
+        "perf-election-07",
+        "{{adult2}}",
+        "I want more events for families.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-015",
+        "perf-election-07",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-016",
+        "perf-election-07",
+        "{{partner}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-001",
+        "perf-election-07"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-001",
+        "perf-ballot-001",
+        "perf-cand-014",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-0 minutes'))",
+      "params": [
+        "perf-election-07",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-002",
+        "perf-election-07"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-002",
+        "perf-ballot-002",
+        "perf-cand-015",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-23 minutes'))",
+      "params": [
+        "perf-election-07",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-003",
+        "perf-election-07"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-003",
+        "perf-ballot-003",
+        "perf-cand-015",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-46 minutes'))",
+      "params": [
+        "perf-election-07",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-4 minutes'), ?)",
+      "params": [
+        "perf-election-08",
+        "Vice President - Fall 2026",
+        "Vice President",
+        "ranked_choice",
+        1,
+        "{{date:-30}}",
+        "{{date:4}}",
+        "voting",
+        "Fall 2026",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-017",
+        "perf-election-08",
+        "{{me}}",
+        "Committed to transparency and steady growth.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-018",
+        "perf-election-08",
+        "{{partner}}",
+        "Strong financial background.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-004",
+        "perf-election-08"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-004",
+        "perf-ballot-004",
+        "perf-cand-017",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-005",
+        "perf-ballot-004",
+        "perf-cand-018",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-0 minutes'))",
+      "params": [
+        "perf-election-08",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-005",
+        "perf-election-08"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-006",
+        "perf-ballot-005",
+        "perf-cand-018",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-007",
+        "perf-ballot-005",
+        "perf-cand-017",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-23 minutes'))",
+      "params": [
+        "perf-election-08",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-006",
+        "perf-election-08"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-008",
+        "perf-ballot-006",
+        "perf-cand-017",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-009",
+        "perf-ballot-006",
+        "perf-cand-018",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-2 days','-46 minutes'))",
+      "params": [
+        "perf-election-08",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-8 minutes'), ?)",
+      "params": [
+        "perf-election-09",
+        "Treasurer - Fall 2026",
+        "Treasurer",
+        "majority",
+        1,
+        "{{date:-30}}",
+        "{{date:-18}}",
+        "closed",
+        "Fall 2026",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-019",
+        "perf-election-09",
+        "{{partner}}",
+        "I'll keep detailed meeting records.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-020",
+        "perf-election-09",
+        "{{adult2}}",
+        "Organized and detail-oriented.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-021",
+        "perf-election-09",
+        "{{me}}",
+        "Ready to serve.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-007",
+        "perf-election-09"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-010",
+        "perf-ballot-007",
+        "perf-cand-019",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-election-09",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-008",
+        "perf-election-09"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-011",
+        "perf-ballot-008",
+        "perf-cand-020",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-election-09",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-009",
+        "perf-election-09"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-012",
+        "perf-ballot-009",
+        "perf-cand-020",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-election-09",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-ballot-010",
+        "perf-election-09"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-013",
+        "perf-ballot-010",
+        "perf-cand-019",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-election-09",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-ballot-011",
+        "perf-election-09"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-014",
+        "perf-ballot-011",
+        "perf-cand-020",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-election-09",
+        "{{child2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-12 minutes'), ?)",
+      "params": [
+        "perf-election-10",
+        "Secretary - Fall 2026",
+        "Secretary",
+        "majority",
+        1,
+        "{{date:-30}}",
+        "{{date:-18}}",
+        "closed",
+        "Fall 2026",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-022",
+        "perf-election-10",
+        "{{adult2}}",
+        "I want more events for families.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-023",
+        "perf-election-10",
+        "{{me}}",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-012",
+        "perf-election-10"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-015",
+        "perf-ballot-012",
+        "perf-cand-022",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-election-10",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-013",
+        "perf-election-10"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-016",
+        "perf-ballot-013",
+        "perf-cand-023",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-election-10",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-014",
+        "perf-election-10"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-017",
+        "perf-ballot-014",
+        "perf-cand-022",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-election-10",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-ballot-015",
+        "perf-election-10"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-018",
+        "perf-ballot-015",
+        "perf-cand-023",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-election-10",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-ballot-016",
+        "perf-election-10"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-019",
+        "perf-ballot-016",
+        "perf-cand-022",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-election-10",
+        "{{child2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-16 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days'), ?)",
+      "params": [
+        "perf-election-11",
+        "Events Chair - Fall 2026",
+        "Events Chair",
+        "ranked_choice",
+        1,
+        "{{date:-30}}",
+        "{{date:-18}}",
+        "certified",
+        "Fall 2026",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-024",
+        "perf-election-11",
+        "{{me}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-025",
+        "perf-election-11",
+        "{{partner}}",
+        "Committed to transparency and steady growth.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-026",
+        "perf-election-11",
+        "{{adult2}}",
+        "Strong financial background.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-017",
+        "perf-election-11"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-020",
+        "perf-ballot-017",
+        "perf-cand-024",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-021",
+        "perf-ballot-017",
+        "perf-cand-025",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-election-11",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-018",
+        "perf-election-11"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-022",
+        "perf-ballot-018",
+        "perf-cand-025",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-023",
+        "perf-ballot-018",
+        "perf-cand-026",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-election-11",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-019",
+        "perf-election-11"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-024",
+        "perf-ballot-019",
+        "perf-cand-026",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-025",
+        "perf-ballot-019",
+        "perf-cand-024",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-election-11",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-ballot-020",
+        "perf-election-11"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-026",
+        "perf-ballot-020",
+        "perf-cand-024",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-027",
+        "perf-ballot-020",
+        "perf-cand-025",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-election-11",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-ballot-021",
+        "perf-election-11"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-028",
+        "perf-ballot-021",
+        "perf-cand-025",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-029",
+        "perf-ballot-021",
+        "perf-cand-026",
+        2
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-election-11",
+        "{{child2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-40 days','-20 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-17 days'), ?)",
+      "params": [
+        "perf-election-12",
+        "Membership Chair - Fall 2026",
+        "Membership Chair",
+        "majority",
+        0,
+        "{{date:-18}}",
+        "certified",
+        "Fall 2026",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-027",
+        "perf-election-12",
+        "{{partner}}",
+        "I'll keep detailed meeting records.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-39 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-028",
+        "perf-election-12",
+        "{{adult2}}",
+        "Organized and detail-oriented.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-ballot-022",
+        "perf-election-12"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-030",
+        "perf-ballot-022",
+        "perf-cand-027",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-0 minutes'))",
+      "params": [
+        "perf-election-12",
+        "{{me}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-ballot-023",
+        "perf-election-12"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-031",
+        "perf-ballot-023",
+        "perf-cand-028",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-23 minutes'))",
+      "params": [
+        "perf-election-12",
+        "{{partner}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-ballot-024",
+        "perf-election-12"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-032",
+        "perf-ballot-024",
+        "perf-cand-027",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-46 minutes'))",
+      "params": [
+        "perf-election-12",
+        "{{adult2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-ballot-025",
+        "perf-election-12"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-033",
+        "perf-ballot-025",
+        "perf-cand-028",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-69 minutes'))",
+      "params": [
+        "perf-election-12",
+        "{{child}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballots (id, election_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-ballot-026",
+        "perf-election-12"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_items (id, ballot_id, candidate_id, rank) VALUES (?, ?, ?, ?)",
+      "params": [
+        "perf-item-034",
+        "perf-ballot-026",
+        "perf-cand-027",
+        1
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_ballot_receipts (election_id, voter_id, created_at) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-20 days','-92 minutes'))",
+      "params": [
+        "perf-election-12",
+        "{{child2}}"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-0 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-13",
+        "President - Spring 2026",
+        "President",
+        "majority",
+        1,
+        "{{date:-160}}",
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-029",
+        "perf-election-13",
+        "{{me}}",
+        "Ready to serve.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-030",
+        "perf-election-13",
+        "{{partner}}",
+        "I want more events for families.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-031",
+        "perf-election-13",
+        "{{adult2}}",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-4 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-14",
+        "Vice President - Spring 2026",
+        "Vice President",
+        "ranked_choice",
+        1,
+        "{{date:-160}}",
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-032",
+        "perf-election-14",
+        "{{partner}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-033",
+        "perf-election-14",
+        "{{adult2}}",
+        "Committed to transparency and steady growth.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-8 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-15",
+        "Treasurer - Spring 2026",
+        "Treasurer",
+        "majority",
+        1,
+        "{{date:-160}}",
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-034",
+        "perf-election-15",
+        "{{adult2}}",
+        "Strong financial background.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-035",
+        "perf-election-15",
+        "{{me}}",
+        "I'll keep detailed meeting records.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-036",
+        "perf-election-15",
+        "{{partner}}",
+        "Organized and detail-oriented.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-12 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-16",
+        "Secretary - Spring 2026",
+        "Secretary",
+        "majority",
+        1,
+        "{{date:-160}}",
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-037",
+        "perf-election-16",
+        "{{me}}",
+        "Ready to serve.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-038",
+        "perf-election-16",
+        "{{partner}}",
+        "I want more events for families.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-16 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-17",
+        "Events Chair - Spring 2026",
+        "Events Chair",
+        "ranked_choice",
+        1,
+        "{{date:-160}}",
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-039",
+        "perf-election-17",
+        "{{partner}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-040",
+        "perf-election-17",
+        "{{adult2}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{adult2}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-041",
+        "perf-election-17",
+        "{{me}}",
+        "Committed to transparency and steady growth.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-175 days','-20 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-149 days'), ?)",
+      "params": [
+        "perf-election-18",
+        "Membership Chair - Spring 2026",
+        "Membership Chair",
+        "majority",
+        0,
+        "{{date:-150}}",
+        "certified",
+        "Spring 2026",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-042",
+        "perf-election-18",
+        "{{adult2}}",
+        "Strong financial background.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-174 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-043",
+        "perf-election-18",
+        "{{me}}",
+        "I'll keep detailed meeting records.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-0 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-19",
+        "President - Fall 2025",
+        "President",
+        "majority",
+        1,
+        "{{date:-345}}",
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-044",
+        "perf-election-19",
+        "{{partner}}",
+        "Organized and detail-oriented.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-045",
+        "perf-election-19",
+        "{{adult2}}",
+        "Ready to serve.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-046",
+        "perf-election-19",
+        "{{me}}",
+        "I want more events for families.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-4 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-20",
+        "Vice President - Fall 2025",
+        "Vice President",
+        "ranked_choice",
+        1,
+        "{{date:-345}}",
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-047",
+        "perf-election-20",
+        "{{adult2}}",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-048",
+        "perf-election-20",
+        "{{me}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-8 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-21",
+        "Treasurer - Fall 2025",
+        "Treasurer",
+        "majority",
+        1,
+        "{{date:-345}}",
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-049",
+        "perf-election-21",
+        "{{me}}",
+        "Committed to transparency and steady growth.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-050",
+        "perf-election-21",
+        "{{partner}}",
+        "Strong financial background.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-051",
+        "perf-election-21",
+        "{{adult2}}",
+        "I'll keep detailed meeting records.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-12 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-22",
+        "Secretary - Fall 2025",
+        "Secretary",
+        "majority",
+        1,
+        "{{date:-345}}",
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-052",
+        "perf-election-22",
+        "{{partner}}",
+        "Organized and detail-oriented.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-053",
+        "perf-election-22",
+        "{{adult2}}",
+        "Ready to serve.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-16 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-23",
+        "Events Chair - Fall 2025",
+        "Events Chair",
+        "ranked_choice",
+        1,
+        "{{date:-345}}",
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-054",
+        "perf-election-23",
+        "{{adult2}}",
+        "I want more events for families.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-055",
+        "perf-election-23",
+        "{{me}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-34 minutes'), ?)",
+      "params": [
+        "perf-cand-056",
+        "perf-election-23",
+        "{{partner}}",
+        "I've been treasurer for two years and want to bring that experience to this office.",
+        "{{partner}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, voting_deadline, status, term_label, created_by, created_at, certified_by, certified_at, visibility) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-360 days','-20 minutes'), ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-334 days'), ?)",
+      "params": [
+        "perf-election-24",
+        "Membership Chair - Fall 2025",
+        "Membership Chair",
+        "majority",
+        0,
+        "{{date:-335}}",
+        "certified",
+        "Fall 2025",
+        "{{adult2}}",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-0 minutes'), ?)",
+      "params": [
+        "perf-cand-057",
+        "perf-election-24",
+        "{{me}}",
+        "Committed to transparency and steady growth.",
+        "{{me}}",
+        "everyone"
+      ]
+    },
+    {
+      "sql": "INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at, visibility) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now','-359 days','-17 minutes'), ?)",
+      "params": [
+        "perf-cand-058",
+        "perf-election-24",
+        "{{partner}}",
+        "Strong financial background.",
+        "{{partner}}",
+        "everyone"
+      ]
+    }
+  ]
+}
