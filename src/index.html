@@ -691,7 +691,7 @@ async function requireChanged(res, electionId) {
   await loadElections();
   rebuildElectionsMap();
   await loadDetailData(electionId);
-  throw new Error("This election can no longer be changed.");
+  throw Object.assign(new Error("This election can no longer be changed."), { forUser: true });
 }
 
 async function advanceToVoting(electionId) {
@@ -715,6 +715,14 @@ async function closeVoting(electionId) {
   render();
 }
 
+// The hub's reason for turning a ballot away (already voted, voting closed)
+// is one the voter can act on, so a 4xx refusal is shown in its own words. An
+// outage is not, and gets the form's fixed line.
+function ballotError(res, body) {
+  const refused = res.status >= 400 && res.status < 500 && typeof body?.error === "string";
+  return Object.assign(new Error(body?.error ?? "Failed to cast ballot"), { forUser: refused });
+}
+
 async function castMajorityBallot(electionId, candidateId) {
   const res = await fetch(window.__CAST_BALLOT_URL ?? `/run/${APP_ID}/api/cast-ballot`, {
     method: "POST",
@@ -726,7 +734,7 @@ async function castMajorityBallot(electionId, candidateId) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to cast ballot");
+    throw ballotError(res, err);
   }
   detailHasVoted    = true;
   detailBallotCount = detailBallotCount + 1;
@@ -745,7 +753,7 @@ async function castRankedBallot(electionId, rankedCandidateIds) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? "Failed to cast ballot");
+    throw ballotError(res, err);
   }
   detailHasVoted    = true;
   detailBallotCount = detailBallotCount + 1;
@@ -887,7 +895,7 @@ window.submitCreateElection = async function() {
   try {
     await createElection({ title, office, votingMethod, hasNominations, nominationsDeadline: nomDeadline, votingDeadline: voteDeadline, termLabel });
   } catch (e) {
-    showErr(errEl, e.message || "Couldn’t create the election. Try again.");
+    showErr(errEl, failText(e, "Couldn’t create the election — try again."));
     if (btn) { btn.disabled = false; btn.textContent = "Create Election"; }
   }
 };
@@ -938,7 +946,7 @@ window.submitNominate = async function(electionId) {
   try {
     await nominateCandidate(electionId, memberId, statement);
   } catch (e) {
-    showErr(errEl, e.message || "Couldn’t save the nomination. Try again.");
+    showErr(errEl, failText(e, "Couldn’t save the nomination — try again."));
     if (btn) { btn.disabled = false; btn.textContent = "Nominate"; }
   }
 };
@@ -978,7 +986,7 @@ window.submitMajorityBallot = async function(electionId) {
   try {
     await castMajorityBallot(electionId, selected);
   } catch (e) {
-    showErr(errEl, e.message || "Couldn’t submit your ballot. Try again.");
+    showErr(errEl, failText(e, "Couldn’t submit your ballot — try again."));
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1041,7 +1049,7 @@ window.submitRankedBallot = async function(electionId) {
   try {
     await castRankedBallot(electionId, rcRanking);
   } catch (e) {
-    showErr(errEl, e.message || "Couldn’t submit your ballot. Try again.");
+    showErr(errEl, failText(e, "Couldn’t submit your ballot — try again."));
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1124,7 +1132,7 @@ window.saveOfficialsGroup = async function(groupId) {
   } catch (e) {
     settings.officials_group_id = prev;
     const errEl = document.getElementById("settings-error");
-    if (errEl) showErr(errEl, e.message ?? "Save failed");
+    if (errEl) showErr(errEl, failText(e, "Couldn’t save the setting — try again."));
   }
 };
 
@@ -1488,7 +1496,7 @@ window.openNominateModal       = openNominateModal;
 async function runAction(action, id) {
   pageError = "";
   try { await action(id); }
-  catch (e) { pageError = e.message || "Couldn’t reach the hub. Try again."; render(); }
+  catch (e) { pageError = failText(e, "Couldn’t update the election — try again."); render(); }
 }
 window.advanceToVoting         = function(id) { return runAction(advanceToVoting, id); };
 window.closeVoting             = function(id) { return runAction(closeVoting, id); };
@@ -1497,6 +1505,9 @@ window.openMajorityBallotModal = openMajorityBallotModal;
 window.openRankedBallotModal   = openRankedBallotModal;
 
 function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
+// Only wording this app wrote for the reader (`forUser`) is shown; any other
+// error is logged and the reader gets the action's own line.
+function failText(e, line) { if (!e?.forUser) if (!e?.forUser) console.error(e); return e?.forUser ? e.message : line; }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
