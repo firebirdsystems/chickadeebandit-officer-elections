@@ -315,6 +315,8 @@
       background: var(--surface, var(--card, #fff)); color: var(--text, inherit);
     }
     .search-input:focus { outline: none; border-color: var(--accent, #6366f1); }
+    .load-error { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: var(--hub-tint-danger, #fee2e2); color: var(--hub-tint-danger-fg, #b91c1c); font-size: 0.9rem; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+    .load-error-retry { background: none; border: 1px solid currentColor; border-radius: 8px; padding: 5px 10px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; flex-shrink: 0; }
   </style>
 <base href="/run/officer-elections/">
 </head>
@@ -392,11 +394,19 @@ async function db(sql, params = []) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sql, params }),
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error ?? `Request failed (${res.status})`);
-  }
-  return res.json();
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  return json;
+}
+
+// A failed load or a refused action, shown above the list and the detail view.
+let pageError = "";
+// Set when the FIRST load could not read the elections or the officials
+// setting; cleared when it succeeds. The banner replaces pageError while set.
+let loadFailed = false;
+function renderPageError() {
+  if (loadFailed) return `<div class="load-error" data-testid="load-error" role="alert"><span>Couldn’t load the elections.</span> <button type="button" class="load-error-retry" data-testid="load-retry">Try again</button></div>`;
+  return pageError ? `<div class="error-msg" role="alert">${esc(pageError)}</div>` : "";
 }
 
 // ─── Member helpers ───────────────────────────────────────────────────────────
@@ -430,10 +440,11 @@ async function loadMembers() {
   }
   try {
     const res = await fetch(`${CONTEXT}?keys=family.members,family.groups`);
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || typeof data !== "object" || (Array.isArray(data.$errors) && data.$errors.some(k => k === "family.members" || k === "family.groups"))) throw new Error("Couldn’t load members");
     members = data["family.members"] ?? [];
     groups  = data["family.groups"]  ?? [];
-  } catch { members = []; groups = []; }
+  } catch { members = []; groups = []; return false; } // unread, not empty: firstLoad raises the banner
 }
 
 // The officials_group_id pointer lives in the `app_config` settings table:
@@ -444,7 +455,7 @@ async function loadSettings() {
   try {
     const r = await db(`SELECT value AS officials_group_id FROM app_officer_elections__settings WHERE key = 'officials_group_id' LIMIT 1`);
     settings = r?.rows?.[0] ?? { officials_group_id: "" };
-  } catch { settings = { officials_group_id: "" }; }
+  } catch { settings = { officials_group_id: "" }; return false; }
 }
 
 async function loadElections() {
@@ -494,7 +505,11 @@ async function loadElections() {
       `SELECT * FROM app_officer_elections__oe_elections ORDER BY created_at DESC LIMIT 200`
     );
     elections = res.rows ?? [];
-  } catch { elections = []; }
+  } catch {
+    elections = [];
+    pageError = "Couldn’t load elections. Try again.";
+    return false;
+  }
 }
 
 async function loadDetailData(electionId) {
@@ -570,6 +585,7 @@ async function loadDetailData(electionId) {
     detailBallotItems = [];
     detailHasVoted    = false;
     detailBallotCount = 0;
+    pageError = "Couldn’t load this election. Try again.";
   }
 }
 
@@ -667,8 +683,20 @@ async function announceVotingDeadline(electionId, election) {
   });
 }
 
+// The hub answers 200 with nothing changed when the election is already
+// certified or the caller is no longer an election official. Re-read so the
+// page shows where the election really stands.
+async function requireChanged(res, electionId) {
+  if (res.changed !== 0) return;
+  await loadElections();
+  rebuildElectionsMap();
+  await loadDetailData(electionId);
+  throw new Error("This election can no longer be changed.");
+}
+
 async function advanceToVoting(electionId) {
-  await db(`UPDATE app_officer_elections__oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
+  const res = await db(`UPDATE app_officer_elections__oe_elections SET status = 'voting' WHERE id = ?`, [electionId]);
+  await requireChanged(res, electionId);
   const election = electionsMap.get(electionId);
   if (election) election.status = "voting";
   await Promise.all([
@@ -679,7 +707,8 @@ async function advanceToVoting(electionId) {
 }
 
 async function closeVoting(electionId) {
-  await db(`UPDATE app_officer_elections__oe_elections SET status = 'closed' WHERE id = ?`, [electionId]);
+  const res = await db(`UPDATE app_officer_elections__oe_elections SET status = 'closed' WHERE id = ?`, [electionId]);
+  await requireChanged(res, electionId);
   const election = electionsMap.get(electionId);
   if (election) election.status = "closed";
   await loadDetailData(electionId);
@@ -726,10 +755,11 @@ async function castRankedBallot(electionId, rankedCandidateIds) {
 
 async function certifyResults(electionId) {
   const now = new Date().toISOString();
-  await db(
+  const res = await db(
     `UPDATE app_officer_elections__oe_elections SET status = 'certified', certified_by = ?, certified_at = ? WHERE id = ?`,
     [ME.id, now, electionId]
   );
+  await requireChanged(res, electionId);
   const election = electionsMap.get(electionId);
   if (election) { election.status = "certified"; election.certified_by = ME.id; election.certified_at = now; }
   const win = winnerId(election, detailCandidates, detailBallotItems);
@@ -856,7 +886,8 @@ window.submitCreateElection = async function() {
 
   try {
     await createElection({ title, office, votingMethod, hasNominations, nominationsDeadline: nomDeadline, votingDeadline: voteDeadline, termLabel });
-  } catch {
+  } catch (e) {
+    showErr(errEl, e.message || "Couldn’t create the election. Try again.");
     if (btn) { btn.disabled = false; btn.textContent = "Create Election"; }
   }
 };
@@ -906,7 +937,8 @@ window.submitNominate = async function(electionId) {
   if (btn) { btn.disabled = true; btn.textContent = "Nominating…"; }
   try {
     await nominateCandidate(electionId, memberId, statement);
-  } catch {
+  } catch (e) {
+    showErr(errEl, e.message || "Couldn’t save the nomination. Try again.");
     if (btn) { btn.disabled = false; btn.textContent = "Nominate"; }
   }
 };
@@ -945,7 +977,8 @@ window.submitMajorityBallot = async function(electionId) {
   if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
   try {
     await castMajorityBallot(electionId, selected);
-  } catch {
+  } catch (e) {
+    showErr(errEl, e.message || "Couldn’t submit your ballot. Try again.");
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1007,7 +1040,8 @@ window.submitRankedBallot = async function(electionId) {
   if (btn) { btn.disabled = true; btn.textContent = "Submitting…"; }
   try {
     await castRankedBallot(electionId, rcRanking);
-  } catch {
+  } catch (e) {
+    showErr(errEl, e.message || "Couldn’t submit your ballot. Try again.");
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1117,11 +1151,11 @@ function renderList() {
         <h1>${glyph("ballot-box")} Officer Elections</h1>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        ${canManage ? `<button class="btn btn-primary btn-sm" data-testid="new-election" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
-        ${IS_ADMIN ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials" aria-label="Election officials">${glyph("gear")}</button>` : ""}
+        ${canManage && !loadFailed ? `<button class="btn btn-primary btn-sm" data-testid="new-election" onclick="openCreateElectionModal()">+ New Election</button>` : ""}
+        ${IS_ADMIN && !loadFailed ? `<button class="btn btn-ghost btn-sm" onclick="openSettings()" title="Election officials" aria-label="Election officials">${glyph("gear")}</button>` : ""}
       </div>
     </div>
-    ${renderOfficialsNotice()}
+    ${loadFailed ? "" : renderOfficialsNotice()}
     <div class="tabs">
       <button class="tab ${listTab === "active" ? "active" : ""}" onclick="setListTab('active')">
         Active${active.length > 0 ? ` (${active.length})` : ""}
@@ -1135,14 +1169,14 @@ function renderList() {
   const searchRow = elections.length ? `<div class="search-row"><input id="search" class="search-input" type="search" placeholder="Search elections…" aria-label="Search elections" value="${esc(searchQ)}" /></div>` : "";
 
   const list = showing.length === 0
-    ? `<div class="empty">
+    ? loadFailed ? "" : `<div class="empty">
         <div class="empty-icon">${chickadee(searchQ ? "searching" : "nest")}</div>
         <p>${searchQ ? `No elections match "${esc(searchQ)}".` : listTab === "active" ? "No active elections." : "No completed elections yet."}</p>
         ${listTab === "active" && canManage ? `<p style="margin-top:8px"><button class="btn btn-primary" onclick="openCreateElectionModal()">Create First Election</button></p>` : ""}
        </div>`
     : showing.map(({ election, phase }) => renderElectionCard(election, phase)).join("");
 
-  document.getElementById("root").innerHTML = header + searchRow + list;
+  document.getElementById("root").innerHTML = header + renderPageError() + searchRow + list;
   // renderList rewrites the view, so put the caret back after typing.
   if (searchQ) {
     const box = document.getElementById("search");
@@ -1199,6 +1233,7 @@ function renderDetail(election) {
 
   document.getElementById("root").innerHTML = `
     <button class="back-btn" onclick="backToList()">← All Elections</button>
+    ${renderPageError()}
 
     <div class="detail-header">
       <div class="detail-title">${esc(election.title)}</div>
@@ -1446,13 +1481,18 @@ window.openElection = async function(id) {
   await loadDetailData(id);
   render();
 };
-window.backToList   = function() { currentElectionId = null; render(); };
+window.backToList   = function() { currentElectionId = null; pageError = ""; render(); };
 window.setListTab   = function(t) { listTab = t; render(); };
 window.openCreateElectionModal = openCreateElectionModal;
 window.openNominateModal       = openNominateModal;
-window.advanceToVoting         = async function(id) { await advanceToVoting(id); };
-window.closeVoting             = async function(id) { await closeVoting(id); };
-window.certifyResults          = async function(id) { await certifyResults(id); };
+async function runAction(action, id) {
+  pageError = "";
+  try { await action(id); }
+  catch (e) { pageError = e.message || "Couldn’t reach the hub. Try again."; render(); }
+}
+window.advanceToVoting         = function(id) { return runAction(advanceToVoting, id); };
+window.closeVoting             = function(id) { return runAction(closeVoting, id); };
+window.certifyResults          = function(id) { return runAction(certifyResults, id); };
 window.openMajorityBallotModal = openMajorityBallotModal;
 window.openRankedBallotModal   = openRankedBallotModal;
 
@@ -1476,13 +1516,19 @@ function handleDeepLink() {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-(async () => {
-  await Promise.all([loadMembers(), loadElections(), loadSettings()]);
+async function firstLoad() {
+  const [membersRead, electionsRead, settingsRead] = await Promise.all([loadMembers(), loadElections(), loadSettings()]);
+  loadFailed = membersRead === false || electionsRead === false || settingsRead === false;
+  if (loadFailed) pageError = "";
   rebuildMembersMap();
   rebuildElectionsMap();
   render();
-  handleDeepLink();
-})();
+  if (!loadFailed) handleDeepLink();
+}
+document.addEventListener("click", (e) => {
+  if (e.target.closest('[data-testid="load-retry"]')) firstLoad();
+});
+firstLoad();
 </script>
 </body>
 </html>
