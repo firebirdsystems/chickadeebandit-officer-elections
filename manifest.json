@@ -160,7 +160,6 @@
     ],
     "oe_ballot_receipts": { "column": "voter_id", "on_removed": "keep" }
   },
-  "resource_limits": { "max_db_bytes": 52428800 },
   "nav": { "label": "Elections" },
   "icon": "🗳️"
 }
