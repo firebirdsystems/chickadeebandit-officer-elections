@@ -333,6 +333,7 @@ import {
   canManageElections as _canManageElections,
   loadAllBallotItems, searchableFields,
   deadlineCalendarDate, votingReviewTitle, votingReviewSummary,
+  outcomeUnknown, storedDiffers, SAVED_AS_FIRST, failureLine, isDuplicate,
 } from "./logic.js";
 
 // ─── Runtime globals ──────────────────────────────────────────────────────────
@@ -395,7 +396,7 @@ async function db(sql, params = []) {
     body: JSON.stringify({ sql, params }),
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok || !json || typeof json !== "object" || json.error) throw new Error(json?.error || "Couldn’t reach the hub. Try again.");
+  if (!res.ok || !json || typeof json !== "object" || json.error) throw Object.assign(new Error(json?.error || "Couldn’t reach the hub. Try again."), { status: res.status, code: typeof json?.code === "string" ? json.code : undefined });
   return json;
 }
 
@@ -599,16 +600,48 @@ async function notify(title, body) {
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
-async function createElection(data) {
-  const id = crypto.randomUUID();
+// "Retry after a lost response" (app-template guide): a create's id is the
+// form's, minted on its first Save and sent on every retry. When the answer is
+// lost, the row is read back by that id: found means an earlier try landed and
+// its success path (the push included) never ran, so it runs now, once. Not
+// found, or the read failed: the save fails and the id stays pinned.
+async function insertPinned(table, id, sql, params) {
+  try { await db(sql, params); return null; }
+  catch (e) {
+    if (!outcomeUnknown(e)) throw e;
+    let stored = null;
+    try { stored = (await db(`SELECT * FROM ${table} WHERE id = ?`, [id])).rows?.[0] ?? null; }
+    catch (readErr) {
+      // The id is ours: with the read-back failed, a UNIQUE answer may be this
+      // form's own first try, so nothing is known — "try again", not "already exists".
+      console.error(readErr);
+      throw new Error("create outcome unknown", { cause: e });
+    }
+    if (!stored) throw e;
+    console.error(e);
+    return stored;
+  }
+}
+
+async function createElection(data, pinHost = null) {
+  const id = pinHost ? (pinHost.dataset.rowId ||= crypto.randomUUID()) : crypto.randomUUID();
   const initialStatus = data.hasNominations ? "nominations" : "voting";
-  await db(
+  const typed = {
+    title: data.title, office: data.office, voting_method: data.votingMethod,
+    has_nominations: data.hasNominations ? 1 : 0, nominations_deadline: data.nominationsDeadline || null,
+    voting_deadline: data.votingDeadline, term_label: data.termLabel,
+  };
+  const stored = await insertPinned("app_officer_elections__oe_elections", id,
     `INSERT INTO app_officer_elections__oe_elections (id, title, office, voting_method, has_nominations, nominations_deadline, voting_deadline, status, term_label, created_by, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [id, data.title, data.office, data.votingMethod, data.hasNominations ? 1 : 0,
      data.nominationsDeadline || null, data.votingDeadline,
-     initialStatus, data.termLabel, ME?.id ?? "system", new Date().toISOString()]
-  );
+     initialStatus, data.termLabel, ME?.id ?? "system", new Date().toISOString()]);
+  // Edited since that first try: what was stored is kept, and said so.
+  const note = stored && storedDiffers(stored, typed) ? SAVED_AS_FIRST : "";
+  if (stored) data = { ...data, office: stored.office, hasNominations: !!Number(stored.has_nominations) };
+  if (pinHost) delete pinHost.dataset.rowId;
+  // Stored: a reload that fails is said by the list itself, never as a failed create.
   await Promise.all([
     loadElections().then(rebuildElectionsMap),
     notify(`New election: ${data.office}`, `A new officer election has been created for ${data.office}. ${data.hasNominations ? "Nominations are now open." : "Voting is now open."}`),
@@ -626,25 +659,54 @@ async function createElection(data) {
       `${ME?.name ?? "Someone"} created an election for ${data.office}`,
       { deepLink: { appId: APP_ID, params: { election: id } } },
     ),
-  ]);
-  closeModal();
+  ]).catch((e) => console.error(e));
+  if (!pinHost || modalEl === pinHost) closeModal();
   currentElectionId = id;
+  if (note) pageError = note;
   await openElection(id);
 }
 
-async function nominateCandidate(electionId, memberId, statement) {
-  const id = crypto.randomUUID();
-  await db(
-    `INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [id, electionId, memberId, statement, ME?.id ?? "system", new Date().toISOString()]
-  );
+async function nominateCandidate(electionId, memberId, statement, pinHost = null) {
+  const id = pinHost ? (pinHost.dataset.rowId ||= crypto.randomUUID()) : crypto.randomUUID();
+  let stored;
+  try {
+    stored = await insertPinned("app_officer_elections__oe_candidates", id,
+      `INSERT INTO app_officer_elections__oe_candidates (id, election_id, member_id, statement, nominated_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, electionId, memberId, statement, ME?.id ?? "system", new Date().toISOString()]);
+  } catch (e) {
+    // Not our own pinned row (insertPinned read that back already): someone
+    // else nominated this member at about the same time. Say so, and unpin so
+    // the next attempt mints a fresh id rather than reading back nothing forever.
+    let other = null;
+    if (isDuplicate(e)) {
+      try {
+        other = (await db(`SELECT * FROM app_officer_elections__oe_candidates WHERE election_id = ? AND member_id = ? LIMIT 1`,
+          [electionId, memberId])).rows?.[0] ?? null;
+      } catch (readErr) { console.error(readErr); }
+    }
+    if (!other) throw e;
+    console.error(e);
+    // This form's own row after all (it landed between the two reads): the
+    // nomination is stored, and its success path runs below, once.
+    if (other.id === id) stored = other;
+    else {
+      if (pinHost) delete pinHost.dataset.rowId;
+      throw userError("That member has already been nominated.");
+    }
+  }
+  // Edited since that first try: what was stored is kept, and said so.
+  const note = stored && storedDiffers(stored, { member_id: memberId, statement }) ? SAVED_AS_FIRST : "";
+  if (stored) memberId = stored.member_id;
+  if (pinHost) delete pinHost.dataset.rowId;
   const nominee = memberById(memberId);
+  // Stored: a reload that fails is said by the detail view, never as a failed nomination.
   await Promise.all([
     loadDetailData(electionId),
     notify(`Nomination: ${nominee?.name ?? "Someone"}`, `${nominee?.name ?? "Someone"} has been nominated for an officer position.`),
-  ]);
-  closeModal();
+  ]).catch((e) => console.error(e));
+  if (!pinHost || modalEl === pinHost) closeModal();
+  if (note) pageError = note;
   render();
 }
 
@@ -688,10 +750,18 @@ async function announceVotingDeadline(electionId, election) {
 // page shows where the election really stands.
 async function requireChanged(res, electionId) {
   if (res.changed !== 0) return;
+  // Re-read the one row: gone is "removed"; certified is frozen; still there
+  // otherwise means the hub refused this member (the write is a plain WHERE id).
+  let row, found = null;
+  try {
+    row = (await db(`SELECT status FROM app_officer_elections__oe_elections WHERE id = ? LIMIT 1`, [electionId])).rows?.[0] ?? null;
+    found = !!row;
+  } catch (readErr) { console.error(readErr); }
   await loadElections();
   rebuildElectionsMap();
   await loadDetailData(electionId);
-  throw Object.assign(new Error("This election can no longer be changed."), { forUser: true });
+  if (row?.status === "certified") throw userError("This election can no longer be changed.");
+  throw userError(failureLine(null, { action: "update the election", thing: "election", found }));
 }
 
 async function advanceToVoting(electionId) {
@@ -715,12 +785,14 @@ async function closeVoting(electionId) {
   render();
 }
 
-// The hub's reason for turning a ballot away (already voted, voting closed)
-// is one the voter can act on, so a 4xx refusal is shown in its own words. An
-// outage is not, and gets the form's fixed line.
+// The hub's reasons for turning a ballot away (already voted, voting closed)
+// are ones the voter can act on, so each gets this app's own line; the hub's
+// text never reaches the screen. Anything else goes through failureLine.
 function ballotError(res, body) {
-  const refused = res.status >= 400 && res.status < 500 && typeof body?.error === "string";
-  return Object.assign(new Error(body?.error ?? "Failed to cast ballot"), { forUser: refused });
+  if (body?.already_voted === true) return userError("You’ve already voted in this election.");
+  if (res.status === 409) return userError("Voting is closed for this election.");
+  return Object.assign(new Error(typeof body?.error === "string" ? body.error : "Failed to cast ballot"),
+    { status: res.status, code: typeof body?.code === "string" ? body.code : undefined });
 }
 
 async function castMajorityBallot(electionId, candidateId) {
@@ -893,9 +965,9 @@ window.submitCreateElection = async function() {
   if (btn) { btn.disabled = true; btn.textContent = "Creating…"; }
 
   try {
-    await createElection({ title, office, votingMethod, hasNominations, nominationsDeadline: nomDeadline, votingDeadline: voteDeadline, termLabel });
+    await createElection({ title, office, votingMethod, hasNominations, nominationsDeadline: nomDeadline, votingDeadline: voteDeadline, termLabel }, modalEl);
   } catch (e) {
-    showErr(errEl, failText(e, "Couldn’t create the election — try again."));
+    showErr(errEl, failLine(e, { action: "create the election", thing: "election" }));
     if (btn) { btn.disabled = false; btn.textContent = "Create Election"; }
   }
 };
@@ -944,9 +1016,9 @@ window.submitNominate = async function(electionId) {
   const btn = modalEl?.querySelector(".modal-actions .btn-primary");
   if (btn) { btn.disabled = true; btn.textContent = "Nominating…"; }
   try {
-    await nominateCandidate(electionId, memberId, statement);
+    await nominateCandidate(electionId, memberId, statement, modalEl);
   } catch (e) {
-    showErr(errEl, failText(e, "Couldn’t save the nomination — try again."));
+    showErr(errEl, failLine(e, { action: "save the nomination", thing: "nomination" }));
     if (btn) { btn.disabled = false; btn.textContent = "Nominate"; }
   }
 };
@@ -986,7 +1058,7 @@ window.submitMajorityBallot = async function(electionId) {
   try {
     await castMajorityBallot(electionId, selected);
   } catch (e) {
-    showErr(errEl, failText(e, "Couldn’t submit your ballot — try again."));
+    showErr(errEl, failLine(e, { action: "submit your ballot", thing: "election" }));
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1049,7 +1121,7 @@ window.submitRankedBallot = async function(electionId) {
   try {
     await castRankedBallot(electionId, rcRanking);
   } catch (e) {
-    showErr(errEl, failText(e, "Couldn’t submit your ballot — try again."));
+    showErr(errEl, failLine(e, { action: "submit your ballot", thing: "election" }));
     if (btn) { btn.disabled = false; btn.textContent = "Submit Ballot"; }
   }
 };
@@ -1124,15 +1196,16 @@ window.saveOfficialsGroup = async function(groupId) {
       body: JSON.stringify({ key: "officials_group_id", value: groupId }),
     });
     if (!res.ok) {
-      let m = "Save failed";
-      try { m = (await res.json()).error ?? m; } catch {}
-      throw new Error(m);
+      let body = null;
+      try { body = await res.json(); } catch {}
+      throw Object.assign(new Error(typeof body?.error === "string" ? body.error : "Save failed"),
+        { status: res.status, code: typeof body?.code === "string" ? body.code : undefined });
     }
     render();
   } catch (e) {
     settings.officials_group_id = prev;
     const errEl = document.getElementById("settings-error");
-    if (errEl) showErr(errEl, failText(e, "Couldn’t save the setting — try again."));
+    if (errEl) showErr(errEl, failLine(e, { action: "save the setting", thing: "setting" }));
   }
 };
 
@@ -1496,7 +1569,7 @@ window.openNominateModal       = openNominateModal;
 async function runAction(action, id) {
   pageError = "";
   try { await action(id); }
-  catch (e) { pageError = failText(e, "Couldn’t update the election — try again."); render(); }
+  catch (e) { pageError = failLine(e, { action: "update the election", thing: "election" }); render(); }
 }
 window.advanceToVoting         = function(id) { return runAction(advanceToVoting, id); };
 window.closeVoting             = function(id) { return runAction(closeVoting, id); };
@@ -1506,8 +1579,9 @@ window.openRankedBallotModal   = openRankedBallotModal;
 
 function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
 // Only wording this app wrote for the reader (`forUser`) is shown; any other
-// error is logged and the reader gets the action's own line.
-function failText(e, line) { if (!e?.forUser) if (!e?.forUser) console.error(e); return e?.forUser ? e.message : line; }
+// error is logged and the reader gets failureLine's line for the action.
+function userError(msg) { return Object.assign(new Error(msg), { forUser: true }); }
+function failLine(e, words) { if (!e?.forUser) console.error(e); return failureLine(e, words); }
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
