@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS app_officer_elections__oe_elections (
-  id                    TEXT PRIMARY KEY,
+  id                    TEXT NOT NULL PRIMARY KEY,
   title                 TEXT NOT NULL,
   office                TEXT NOT NULL,
   voting_method         TEXT NOT NULL DEFAULT 'majority',
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS app_officer_elections__oe_elections (
 );
 
 CREATE TABLE IF NOT EXISTS app_officer_elections__oe_candidates (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   election_id  TEXT NOT NULL,
   member_id    TEXT NOT NULL,
   statement    TEXT NOT NULL DEFAULT '',
@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS app_officer_elections__oe_candidates (
 -- no link back to oe_ballots/oe_ballot_items — so no query can join a voter's
 -- identity to their selections.
 CREATE TABLE IF NOT EXISTS app_officer_elections__oe_ballots (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   election_id  TEXT NOT NULL,
   created_at   TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS app_officer_elections__oe_ballot_items (
-  id           TEXT PRIMARY KEY,
+  id           TEXT NOT NULL PRIMARY KEY,
   ballot_id    TEXT NOT NULL,
   candidate_id TEXT NOT NULL,
   rank         INTEGER NOT NULL DEFAULT 1

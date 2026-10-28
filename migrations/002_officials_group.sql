@@ -17,7 +17,7 @@
 --    disables management until the group is configured.
 
 CREATE TABLE IF NOT EXISTS app_officer_elections__settings (
-  key   TEXT PRIMARY KEY,
+  key   TEXT NOT NULL PRIMARY KEY,
   value TEXT NOT NULL
 );
 
